@@ -4,7 +4,7 @@
 
 --狂野模式开关
 --记得把zzsystem.lua里的也设置为true
-wild_mode = false	--狂野模式！！（仅限服务器用，解放偷梁换柱、猴子）
+wild_mode = false --狂野模式！！（仅限服务器用，解放偷梁换柱、猴子）
 
 --------------------------------------------------
 --描述里的加号都给老子别用全角！！！——Notify
@@ -25,12 +25,11 @@ extension.metadata = require "packages.vupslash.metadata"
 --游戏部分：
 -- 增加音量调节功能
 -- 增加超过最大体力值和滋养
--- 增加交互方式
 -- 思考图片的处理方式
 --底层部分
--- 增加属性伤害（涉及：冰沙···）
--- 在卡牌上做标记（涉及：秋乌炽翎）
--- 增加轮次时点（涉及：萨比萌视幻）
+-- 【已写在0.0.8名单】增加冰属性伤害（涉及：冰沙···）
+-- 【已写在0.0.8名单】在卡牌上做标记（涉及：秋乌炽翎）
+-- 【已写在0.0.8名单】增加轮次时点（涉及：萨比萌视幻）
 -- 新增技能种类：转换技
 -- 玩家是否可以使用特定牌
 -- 从指定牌堆中找特定的牌
@@ -58,7 +57,7 @@ extension.metadata = require "packages.vupslash.metadata"
 
 --------------------------------------------------
 -- gamerule开发计划
--- 1. （room）标记清理
+-- 1. 【已写在0.0.8名单】（room）标记清理
 -- 可以集中清理角色身上标记，需要涉及的时间点：
 -- 回合结束、出牌阶段结束、摸牌阶段结束、弃牌阶段结束
 -- 可以支持清除指定前缀/后缀的标记。
@@ -72,7 +71,9 @@ extension.metadata = require "packages.vupslash.metadata"
 
 -- 5. （player）使用的下一张牌可以额外增加/取消N个目标，是否受距离限制
 
--- 6. 重铸牌，返回牌堆
+-- 6. 重铸牌
+
+-- 7. 【已写在0.0.8名单】返回牌堆
 --------------------------------------------------
 
 --------------------------------------------------
@@ -158,7 +159,7 @@ end
 --TODO4:各类基础信息统计
 --------------------------------------------------
 
-local turn_end_clear_mark = {}	--回合结束清除的标记
+local turn_end_clear_mark = {}  --回合结束清除的标记
 local mark_cleaner = fk.CreateTriggerSkill{
 name = "mark_cleaner",
 refresh_events = {fk.EventPhaseChanging},
@@ -259,6 +260,56 @@ local super_yingzi = fk.CreateTriggerSkill{
 }
 
 --------------------------------------------------
+--测试技能：摸指定牌
+--------------------------------------------------
+
+local v_cheat = fk.CreateActiveSkill{
+  name = "v_cheat",
+  anim_type = "drawcard",
+  can_use = function(self, player)
+    return true
+  end,
+  on_use = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    local cardTypeName = room:askForChoice(from, { 'BasicCard', 'TrickCard', 'Equip' }, "cheat")
+    local cardType = Card.TypeBasic
+    if cardTypeName == 'TrickCard' then
+      cardType = Card.TypeTrick
+    elseif cardTypeName == 'Equip' then
+      cardType = Card.TypeEquip
+    end
+
+    local allCardIds = Fk:getAllCardIds()
+    local allCardMapper = {}
+    local allCardNames = {}
+    for _, id in ipairs(allCardIds) do
+      local card = Fk:getCardById(id)
+      if card.type == cardType then
+        if allCardMapper[card.name] == nil then
+          table.insert(allCardNames, card.name)
+        end
+
+        allCardMapper[card.name] = allCardMapper[card.name] or {}
+        table.insert(allCardMapper[card.name], id)
+      end
+    end
+
+    if #allCardNames == 0 then
+      return
+    end
+
+    local cardName = room:askForChoice(from, allCardNames, "cheat")
+    local toGain = nil
+    if #allCardMapper[cardName] > 0 then
+      toGain = allCardMapper[cardName][math.random(1, #allCardMapper[cardName])]
+    end
+
+    from:addToPile(self.name, toGain, true, self.name)
+    room:obtainCard(effect.from, toGain, true, fk.ReasonPrey)
+  end
+}
+
+--------------------------------------------------
 --嗜甜
 --------------------------------------------------
 
@@ -309,7 +360,7 @@ local v_shitian = fk.CreateTriggerSkill{
       --彩蛋标签准备
       room:setPlayerMark(player, "v_shitian_failed", 0)
       room:delay(500)
-    else	--触发彩蛋
+    else  --触发彩蛋
       if player:getMark("v_shitian_failed") >= 1 then
         room:setEmotion(player, "./packages/vupslash/image/anim/v_shitian_failed")
 
@@ -635,7 +686,10 @@ local v_xixue = fk.CreateTriggerSkill{
   name = "v_xixue",
   --赋予摸牌型技能定义
   anim_type = "drawcard",
-  events = {fk.CardUseFinished},
+  -- --时机：手牌结算后
+  -- events = {fk.CardUseFinished},
+  --时机：宣告手牌使用时
+  events = {fk.AfterCardUseDeclared},
   --触发条件：触发时机的角色为遍历到的角色、遍历到的角色具有本技能、遍历到的角色处于出牌阶段、满足技能条件
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
@@ -645,11 +699,13 @@ local v_xixue = fk.CreateTriggerSkill{
     player:drawCards(1, self.name)
   end,
 
-  refresh_events = {fk.CardUseFinished, fk.EventPhaseStart},
+  --refresh_events = {fk.CardUseFinished, fk.EventPhaseStart},
+  refresh_events = {fk.CardUseFinished, fk.AfterCardUseDeclared},
   can_refresh = function(self, event, target, player, data)
     if event == fk.EventPhaseStart then
       return target == player and player:hasSkill(self.name) and player.phase ~= Player.Play
-    elseif event == fk.CardUseFinished then
+    --elseif event == fk.CardUseFinished then
+    elseif event == fk.AfterCardUseDeclared then
       return target == player and player:hasSkill(self.name) and player.phase == Player.Play -- FIXME: this is a bug of FK 0.0.2!!
     end
   end,
@@ -658,7 +714,8 @@ local v_xixue = fk.CreateTriggerSkill{
     if event == fk.EventPhaseStart then
       room:setPlayerMark(player, "#v_xixue_mark", 0)
       room:setPlayerMark(player, "@v_xixue_mark", 0)
-    elseif event == fk.CardUseFinished then
+    elseif event == fk.AfterCardUseDeclared then
+    --elseif event == fk.CardUseFinished then
       self.can_xixue = suit_close(data.card.suit) == player:getMark("#v_xixue_mark")
       room:setPlayerMark(player, "#v_xixue_mark", data.card.suit)
       room:setPlayerMark(player, "@v_xixue_mark", data.card:getSuitString())
@@ -673,6 +730,7 @@ local v_xixue = fk.CreateTriggerSkill{
 
 local xiaoqiancunyouyou_yaolingbaiyou = General(extension,"xiaoqiancunyouyou_yaolingbaiyou", "novus", 3, 3, General.Female)
 xiaoqiancunyouyou_yaolingbaiyou:addSkill(v_xixue)
+xiaoqiancunyouyou_yaolingbaiyou:addSkill(v_cheat)
 
 --------------------------------------------------
 --链心
@@ -834,9 +892,12 @@ local v_longxi = fk.CreateTriggerSkill{
   --技能为锁定技，满足条件后强制发动
   frequency = Skill.Compulsory,
   events = {fk.TargetSpecified},
-  --触发条件：触发时机的角色为遍历到的角色，触发者拥有此技能，触发者本回合已使用过一张牌，触发者处于出牌阶段。
+  --触发条件：触发时机的角色为遍历到的角色，触发者拥有此技能，触发者本回合已使用过一张牌，触发者处于出牌阶段，
+  --             本次流程中第一次触发这个时机
   can_trigger = function(self, event, target, player, data)
+    local targets = data
     return target == player and player:hasSkill(self.name) and player.phase == Player.Play and player:getMark("#v_longxi_mark") == 2
+    and targets.firstTarget
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
@@ -863,11 +924,13 @@ local v_longxi = fk.CreateTriggerSkill{
   --目前萌以前写的标记一键删除姬还没做出来，因此还是用比较原始的refresh处理。
   refresh_events = {fk.TargetSpecified, fk.EventPhaseStart},
   can_refresh = function(self, event, target, player, data)
+    local targets = data
     if not (target == player and player:hasSkill(self.name)) then
       return false
     end
     if event == fk.TargetSpecified then
       return player.phase == Player.Play
+      and targets.firstTarget
     elseif event == fk.EventPhaseStart then
       return player.phase == Player.NotActive
     end
@@ -891,6 +954,7 @@ table.insert(turn_end_clear_mark, "#v_longxi_mark")
 
 local kanuoya_akanluerbanlong = General(extension, "kanuoya_akanluerbanlong", "xuyanshe", 4, 4, General.Female)
 kanuoya_akanluerbanlong:addSkill(v_longxi)
+--kanuoya_akanluerbanlong:addSkill(v_cheat)
 
 --------------------------------------------------
 --狐尾扇
@@ -901,8 +965,10 @@ local v_huweishan = fk.CreateTriggerSkill{
   name = "v_huweishan",
   --赋予输出型技能定义
   anim_type = "offensive",
-  --时机：手牌结算后
-  events = {fk.CardUseFinished},
+  -- --时机：手牌结算后
+  -- events = {fk.CardUseFinished},
+  --时机：宣告手牌使用时
+  events = {fk.AfterCardUseDeclared},
   --（阶段变化时）触发时机的角色为遍历到的角色；遍历到的角色具有本技能；存在实体卡（后续需要测试，如不成功可以通过ID>0处理）。
   --             使用的牌为杀；本回合只使用过一次技能。
   can_trigger = function(self, event, target, player, data)
@@ -942,6 +1008,7 @@ local v_huweishan = fk.CreateTriggerSkill{
 
 local xingmengzhenxue_rongyixiaohu = General(extension,"xingmengzhenxue_rongyixiaohu", "individual", 4, 4, General.Female)
 xingmengzhenxue_rongyixiaohu:addSkill(v_huweishan)
+--xingmengzhenxue_rongyixiaohu:addSkill(v_cheat)
 
 --------------------------------------------------
 --抹挑
@@ -1343,8 +1410,8 @@ local v_fangxian = fk.CreateTriggerSkill{
       if #to > 0 then
         --通过ID找到对应的ServerPlayer
         local player_to = room:getPlayerById(to[1])
-				--指向类特效用函数doIndicate，但执行后由于不明原因在367行报了function的错，不理解。
-        --room:doAnimate(1, player:objectName(), to:objectName())	--doAnimate 1:产生一条从前者到后者的指示线
+        --指向类特效用函数doIndicate，但执行后由于不明原因在367行报了function的错，不理解。
+        --room:doAnimate(1, player:objectName(), to:objectName()) --doAnimate 1:产生一条从前者到后者的指示线
         if player_to ~= player then
           --doindicate的两个参数均为integer类型，一般为角色id
           room:doIndicate(player.id,to)
@@ -1355,10 +1422,10 @@ local v_fangxian = fk.CreateTriggerSkill{
           recoverBy = player,
           skillName = self.name
         }
-			else
-				player:drawCards(2, self.name)
-			end
-		end
+      else
+        player:drawCards(2, self.name)
+      end
+    end
   end,
 
   --目前萌以前写的标记一键删除姬还没做出来，因此还是用比较原始的refresh处理。
@@ -1732,6 +1799,7 @@ v_qilv:addRelatedSkill(v_qilvbuff)
 
 local wuqian_daweiba = General(extension,"wuqian_daweiba", "individual", 4, 4, General.Male)
 wuqian_daweiba:addSkill(v_qilv)
+--wuqian_daweiba:addSkill(v_cheat)
 
 --------------------------------------------------
 --自愈

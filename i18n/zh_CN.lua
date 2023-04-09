@@ -40,6 +40,10 @@ Fk:loadTranslationTable{
 	--通用描述
 	["#defense_damage"] = "由于 %arg”的效果，防止了 %from 对 %to 造成的 %arg2 点伤害",
 
+	--通用技能
+	["v_cheat"] = "开挂",
+	[":v_cheat"] = "出牌阶段，你可以获得一张想要的牌。",
+
 	--角色
 	--psp
 	--绫奈奈奈
