@@ -730,7 +730,7 @@ local v_xixue = fk.CreateTriggerSkill{
 
 local xiaoqiancunyouyou_yaolingbaiyou = General(extension,"xiaoqiancunyouyou_yaolingbaiyou", "novus", 3, 3, General.Female)
 xiaoqiancunyouyou_yaolingbaiyou:addSkill(v_xixue)
-xiaoqiancunyouyou_yaolingbaiyou:addSkill(v_cheat)
+--xiaoqiancunyouyou_yaolingbaiyou:addSkill(v_cheat)
 
 --------------------------------------------------
 --链心
@@ -1255,6 +1255,104 @@ xianyu_xiangluancuxian:addSkill(v_motiao)
 xianyu_xiangluancuxian:addSkill(v_lianzou)
 
 --------------------------------------------------
+--贵胄
+--技能马克：
+--------------------------------------------------
+
+local v_guizhou = fk.CreateTriggerSkill{
+  name = "v_guizhou",
+  anim_type = "defensive",
+  events = {fk.TargetConfirming},
+  can_trigger = function(self, event, target, player, data)
+    local ret = target == player and player:hasSkill(self.name) and
+      (data.card.trueName == "slash" or data.card.name == "duel" )
+    if ret then
+      self.target_list = {}
+      local room = player.room
+      for _, p in ipairs(room:getOtherPlayers(player)) do
+        if p.id ~= data.from and p:inMyAttackRange(player) then
+          table.insert(self.target_list, p.id)
+        end
+      end
+      return #self.target_list > 0
+    end
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local prompt = "#v_guizhou_target:"..data.from.."::"..data.card.name
+    local plist, cid = room:askForChooseCardAndPlayers(player, self.target_list, 1, 1, nil, prompt, self.name)
+    if #plist > 0 then
+      self.cost_data = {plist[1], cid}
+      return true
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local to = self.cost_data[1]
+    room:doIndicate(player.id, { to })
+    --暂且不知道为啥翻车了，放一放吧。
+    -- room:sendLog{
+    --   type = "#v_guizhou_log",
+    --   from = data.from,
+    --   to = { { to } },
+    --   arg = self.name,
+    --   card = { data.card.id },
+    -- }
+    room:throwCard(self.cost_data[2], self.name, player, player)
+    TargetGroup:removeTarget(data.targetGroup, player.id)
+    TargetGroup:pushTargets(data.targetGroup, to)
+  end,
+}
+
+--------------------------------------------------
+--苦情
+--技能马克：
+--------------------------------------------------
+
+local v_kuqing = fk.CreateTriggerSkill{
+  name = "v_kuqing",
+  --赋予控场型技能定义
+  anim_type = "control",
+  --时机：受到伤害后
+  events = {fk.Damaged},
+  --触发条件：
+  -- 遍历到的角色具有本技能
+  -- 伤害大于0，触发时机的角色处于遍历到的角色攻击范围内
+  -- 触发时机的角色区域内有牌
+  can_trigger = function(self, event, target, player, data)
+    local damage = data
+    return player:hasSkill(self.name) 
+    and damage.damage > 0 and player:inMyAttackRange(target)
+    and (not target:isNude())
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local prompt = "#v_kuqing_use:"..target.id
+    if (not player:isKongcheng()) then
+      local ret = room:askForDiscard(player, 1, 1, false, self.name, true, ".", prompt)
+      --需要的话在这里增加技能检测失效
+      if #ret > 0 then
+        return true
+      end
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local card = room:askForCardChosen(player, target, "he", self.name)
+    room:obtainCard(player.id, card, false)
+  end,
+}
+
+--------------------------------------------------
+--诺拉
+--角色马克：
+--------------------------------------------------
+
+local nuola_canglangzhixin = General(extension,"nuola_canglangzhixin", "RainbowPro", 3, 3, General.Female)
+nuola_canglangzhixin:addSkill(v_guizhou)
+nuola_canglangzhixin:addSkill(v_kuqing)
+
+--------------------------------------------------
 --幽蓝
 --技能马克：缺少七海表情包
 --------------------------------------------------
@@ -1568,7 +1666,7 @@ table.insert(turn_end_clear_mark, "@v_shihuan!")
 
 local v_kecan = fk.CreateTriggerSkill{
   name = "v_kecan",
-  --赋予负面场型技能定义
+  --赋予负面型技能定义
   anim_type = "negative",
   --时机：受到伤害后
   events = {fk.Damaged},
@@ -2432,7 +2530,7 @@ local v_bianshi = fk.CreateActiveSkill{
 
 local xiaomao_lairikeqi = General(extension,"xiaomao_lairikeqi", "individual", 4, 4, General.Female)
 xiaomao_lairikeqi:addSkill(v_bianshi)
--- xiaomao_lairikeqi:addSkill(v_chengzhang)
+--xiaomao_lairikeqi:addSkill(v_chengzhang)
 
 --------------------------------------------------
 --模式：斗地主

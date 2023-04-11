@@ -65,5 +65,8 @@
 ---data
 ---（重要）根据不同时机，其输入的内容不同。
 ---如data.to在fk.EventPhaseChanging中就是对应阶段，而
----在fk.TargetSpecified中是目标玩家。
+--- 在fk.TargetSpecified中是目标玩家。
+---sgs.CardUsed在FK中，根据“使用时/结算后”两种时机，
+--- 可以分为fk.AfterCardUseDeclared（宣告手牌使用时）
+--- 及fk.CardUseFinished（手牌结算后）
 --------------------------------------------------

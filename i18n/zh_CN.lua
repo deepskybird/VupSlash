@@ -199,6 +199,27 @@ Fk:loadTranslationTable{
 	["$v_lianzou1"] = "琶音",
 	["$v_lianzou2"] = "琶音",
 
+	--虚虹人形
+	--诺拉
+	["nuola_canglangzhixin"] = "诺拉",
+	["&nuola_canglangzhixin"] = "诺拉",
+	["#nuola_canglangzhixin"] = "沧浪之心",
+	["$nuola_canglangzhixin"] = "一般",
+	["designer:nuola_canglangzhixin"] = "NSX",
+	["cv:nuola_canglangzhixin"] = "",
+	["illustrator:nuola_canglangzhixin"] = "",
+	["~nuola_canglangzhixin"] = "",
+	["v_guizhou"] = "贵胄",
+	[":v_guizhou"] = "你成为【杀】或【决斗】的目标时，你可以弃置一张牌<font color='#A9A9A9'>发动此技能</font>，将此牌转移给一名攻击范围内有你的其他角色。",
+	["$v_guizhou"] = "",
+    ["~v_guizhou"] = "选择一张牌→选择一名其他角色→点击确定",
+    ["#v_guizhou_target"] = "%src 对你使用 %arg，你可以弃置一张牌发动“贵胄”，将此牌转移给其他角色",
+	["#v_guizhou_log"] = "由于“%arg”的效果，%from 使用的 %card 目标改为 %to",
+	["v_kuqing"] = "苦情",
+	[":v_kuqing"] = "你攻击范围内的角色受到伤害后，你可以弃置一张手牌<font color='#A9A9A9'>发动此技能</font>，获得其一张牌。",
+	["$v_kuqing"] = "",
+	["#v_kuqing_use"] = "你可以弃置一张手牌，对 %src 发动“苦情”",
+
 	--鸽舍
 	--七海幽娴
 	["qihaiyouxian_zhuangzhilingyun"] = "七海幽娴",
@@ -269,14 +290,13 @@ Fk:loadTranslationTable{
 	["v_xiexi"] = "蟹袭",
 	[":v_xiexi"] = "一名角色使用红桃牌结算结束后，你可以<font color='#A9A9A9'>发动此技能</font>，若其未横置则横置之，否则对其造成1点火焰伤害。",
 	["$v_xiexi"] = "",
-  --["#v_xiexi_invoke"] = "你可以发动“蟹袭”，横置 %src，若其已横置，则对 %src 造成1点火焰伤害",
+  	--["#v_xiexi_invoke"] = "你可以发动“蟹袭”，横置 %src，若其已横置，则对 %src 造成1点火焰伤害",
 	["v_xiexi_chain"] = "你可以发动“蟹袭”，横置 %src",
 	["v_xiexi_damage"] = "你可以发动“蟹袭”，对 %src 造成1点火焰伤害",
 	["v_guiying"] = "归影",
 	[":v_guiying"] = "你离场时，你可以指定一名其他角色，<font color='#A9A9A9'>发动此技能</font>，其翻面然后获得你区域内的所有牌。",
 	["$v_guiying"] = "",
 	["#v_guiying_invoke"] = "你可以指定一名角色发动“归影”，令其翻面并获得你的所有牌",
-
 
 	--无前Namae
 	["wuqian_daweiba"] = "无前Namae",
