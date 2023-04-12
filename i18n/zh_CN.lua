@@ -270,6 +270,7 @@ Fk:loadTranslationTable{
 	["~sabimeng_bimengjushou"] = "",
 	["v_shihuan"] = "视幻",
 	["#v_shihuan_buff"] = "视幻",
+	["@v_shihuan_card-turn"] = "视幻",
 	[":v_shihuan"] = "每轮限一次，一名角色的准备阶段，你可以<font color='#A9A9A9'>发动此技能</font>，令其本回合手牌上限等于X。（X为其手牌数且至少为1）",
 	["$v_shihuan"] = "",
 	["v_shihuan_choice"] = "你可以发动“视幻”，令 %src 本回合的手牌上限变为 %arg",

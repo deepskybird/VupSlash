@@ -29,7 +29,7 @@ extension.metadata = require "packages.vupslash.metadata"
 --底层部分
 -- 【已写在0.0.8名单】增加冰属性伤害（涉及：冰沙···）
 -- 【已写在0.0.8名单】在卡牌上做标记（涉及：秋乌炽翎）
--- 【已写在0.0.8名单】增加轮次时点（涉及：萨比萌视幻）
+-- 【已写在0.0.8名单——问题解决了请后续跟进！】增加轮次时点（涉及：萨比萌视幻）
 -- 新增技能种类：转换技
 -- 玩家是否可以使用特定牌
 -- 从指定牌堆中找特定的牌
@@ -47,19 +47,16 @@ extension.metadata = require "packages.vupslash.metadata"
 --缺少技能无效时的应对（慵懒，芳仙，视幻等，后续更新）【疑似在skill里有可用函数】
 -- 在上面的情况下，以下技能存在跳过阶段无法作为on_cost一部分的方式，后续处理（芳仙、娇惰）
 --通用计算回合内伤害/弃牌量的东西暂时耦合在其他技能里（扬歌，抹挑）
---回合后一键删除标记集成（龙息，抹挑，连奏，袭穴，芳仙，视幻，忆狩，娇惰）
+--【目前官方已提供round/phase/turn，请后续跟进】回合后一键删除标记集成（龙息，抹挑，连奏，袭穴，芳仙，视幻，忆狩，娇惰）
 
 --有个player:canEffect(对方角色,技能名)以及SkillCanTarget(对方角色, player, 技能名)的看不出来是什么，疑似与词条“发动此技能”有关，但和技能无效一样是通用内容）
-
---bug:
---铁索连环的联动容易出问题，据说第一张用铁索的卡诺娅会直接触发技能。
 --------------------------------------------------
 
 --------------------------------------------------
 -- gamerule开发计划
 -- 1. 【已写在0.0.8名单】（room）标记清理
 -- 可以集中清理角色身上标记，需要涉及的时间点：
--- 回合结束、出牌阶段结束、摸牌阶段结束、弃牌阶段结束
+-- 【已支持round/phase/turn三种情况】回合结束、出牌阶段结束、摸牌阶段结束、弃牌阶段结束
 -- 可以支持清除指定前缀/后缀的标记。
 -- 扩展：可以清除手牌上的标记，时机：离开手牌区（仅持有者变化不影响标记），进入弃牌堆，拥有者变化
 
@@ -1130,7 +1127,7 @@ local v_motiao = fk.CreateTriggerSkill{
           data.damage = 1
           --return false
         else
-          --动画可以放这里放。
+          room:setEmotion(data.to, "./packages/vupslash/image/anim/skill_nullify")
           room:sendLog{
             type = "#defense_damage",
             from = player.id,
@@ -1256,7 +1253,6 @@ xianyu_xiangluancuxian:addSkill(v_lianzou)
 
 --------------------------------------------------
 --贵胄
---技能马克：
 --------------------------------------------------
 
 local v_guizhou = fk.CreateTriggerSkill{
@@ -1290,14 +1286,13 @@ local v_guizhou = fk.CreateTriggerSkill{
     local room = player.room
     local to = self.cost_data[1]
     room:doIndicate(player.id, { to })
-    --暂且不知道为啥翻车了，放一放吧。
-    -- room:sendLog{
-    --   type = "#v_guizhou_log",
-    --   from = data.from,
-    --   to = { { to } },
-    --   arg = self.name,
-    --   card = { data.card.id },
-    -- }
+    room:sendLog{
+      type = "#v_guizhou_log",
+      from = data.from,
+      to = { to },
+      arg = self.name,
+      card = { data.card.id },
+    }
     room:throwCard(self.cost_data[2], self.name, player, player)
     TargetGroup:removeTarget(data.targetGroup, player.id)
     TargetGroup:pushTargets(data.targetGroup, to)
@@ -1557,14 +1552,17 @@ taoshuiji_fenhuafutao:addSkill(v_fangxian)
 
 --------------------------------------------------
 --视幻
---技能马克：等待轮次时点；需要重写on_cost；视幻发动时的提示暂时无法插入。
 --------------------------------------------------
 
 --TODO:修改角色手牌上限
---local v_shihuan_buff = fk.CreateMaxCardsSkill{
---  name = "#v_shihuan_buff"
-  
---}
+local v_shihuan_buff =  fk.CreateMaxCardsSkill{
+  name = "#v_shihuan_buff",
+  fixed_func = function(self, player)
+    if player:getMark("@v_shihuan_card-turn") > 0 then
+      return player:getMark("@v_shihuan_card-turn")
+    end
+  end
+}
 local v_shihuan = fk.CreateTriggerSkill{
   name = "v_shihuan",
   --赋予控场型技能定义
@@ -1573,28 +1571,8 @@ local v_shihuan = fk.CreateTriggerSkill{
   events = {fk.EventPhaseStart},
   --触发条件：遍历到的角色处于准备阶段；遍历全场所有角色，存在角色持有该技能。
   can_trigger = function(self, event, target, player, data)
-    --遍历全场所有角色，检查是否有存在此技能的角色（从阮卿言的经验来看要出多个角色发动技能的事儿）
-    local room = player.room
-    local alives = room:getAlivePlayers()
-    local targets = {}
-    local targets_myself = {}
-    local player_to = nil
-    for _,p in ipairs(alives) do
-      if p:hasSkill(self.name) then
-        table.insert(targets, p.id)
-      end
-    end
-    for _,p in ipairs(alives) do
-      if p:hasSkill(self.name) then
-        table.insert(targets_myself, p.id)
-      end
-    end
-    --无法确认此情况下本技能对多个持有本技能的角色会造成什么。
-    for _,myself in targets do
-      player_to = room:getPlayerById(myself[1])
-    end
-    return #targets > 0 and player.phase == Player.Start
-    and player_to:usedSkillTime(self.name, Player.HistoryRound) < 1
+    return target.phase == Player.Start
+    and player:hasSkill(self.name) and player:usedSkillTimes(self.name, Player.HistoryRound) < 1
   end,
   -- on_trigger = function(self, event, target, player, data)
   --   --if self:isEffectable(player) then
@@ -1603,65 +1581,38 @@ local v_shihuan = fk.CreateTriggerSkill{
   -- end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local alives = room:getAlivePlayers()
-    local targets = {}
-    for _,p in ipairs(alives) do
-      if p:hasSkill(self.name) then
-        table.insert(targets, p.id)
-      end
+    local prompt = "v_shihuan_choice:"..target.id.."::"..target:getHandcardNum()
+    if room:askForSkillInvoke(player, self.name, data, prompt) then
+      return true
     end
-    for _,myself in targets do
-      local player_to = room:getPlayerById(myself[1])
-      if player_to:usedSkillTime(self.name, Player.HistoryRound) < 1 then
-        --先用askforskillinvoke试试，如果存在多次发动嵌套则可能使用askforchooseplayer（此状态下无法放提示）
-        local prompt = "v_shihuan_choice:"..player.id.."::"..player:getHandcardNum()
-        if room:askForSkillInvoke(player_to,self.name,data,prompt) then
-          return true
-        end
-      end
-    end
+    --   end
+    -- end
   end,
   on_use = function(self, event, target, player, data)
     --遍历全场所有角色，对持有此技能的角色检查是否本轮次使用过技能，若无，则询问其是否发动技能。
     local room = player.room
-    local alives = room:getAlivePlayers()
-    local targets = {}
-    for _,p in ipairs(alives) do
-      if p:hasSkill(self.name) then
-        table.insert(targets, p.id)
-      end
+    if target ~= player then
+      --doindicate的两个参数一个为integer，一个为table
+      room:doIndicate(player.id, { target.id })
     end
-    for _,myself in targets do
-      local player_to = room:getPlayerById(myself[1])
-      if player_to:usedSkillTime(self.name, Player.HistoryRound) < 1 then
-        --先用askforskillinvoke试试，如果存在多次发动嵌套则可能使用askforchooseplayer（此状态下无法放提示）
-        local prompt = "v_shihuan_choice:"..player.id.."::"..player:getHandcardNum()
-        if player_to ~= player then
-          --doindicate的两个参数均为integer类型，一般为角色id
-          room:doIndicate(player_to.id,myself)
-        end
-        -- TODO:后续这里做log在提示信息中说明角色手牌上限调整。
-        -- room:sendLog{
-        --   type = "#v_shihuan_log",
-        --   from = player.id,
-        --   arg = self.name,
-        --   arg2 = math.max(1, player:getHandcardNum(),
-        -- }
-        -- body
-        room:setPlayerMark(player,"@v_shihuan!",math.max(1, player:getHandcardNum()))
-      end
-    end
+    -- TODO:后续这里做log在提示信息中说明角色手牌上限调整。
+    room:sendLog{
+      type = "#v_shihuan_log",
+      to = {target.id},
+      arg = self.name,
+      arg2 = math.max(1, target:getHandcardNum()),
+    }
+    room:setPlayerMark(target,"@v_shihuan_card-turn",math.max(1, target:getHandcardNum()))
   end,
-  --TODO:轮次结束清理标记，由于轮次开始/结束时时机预计将于0.0.6版本实装，因此暂不更新。
 }
 
-table.insert(turn_end_clear_mark, "@v_shihuan!")
+--table.insert(turn_end_clear_mark, "@v_shihuan!")
 
---v_shihuan:addRelatedSkill(v_shihuan_buff)
+v_shihuan:addRelatedSkill(v_shihuan_buff)
 
 --------------------------------------------------
 --可餐
---技能马克：锦囊牌显示好结果暂时无法出现，有概率要把所有牌的名字写上去。
+--TODO：锦囊牌显示好结果暂时无法出现，有概率要把所有牌的名字写上去。
 --------------------------------------------------
 
 local v_kecan = fk.CreateTriggerSkill{
@@ -1700,21 +1651,20 @@ local v_kecan = fk.CreateTriggerSkill{
       room:changeMaxHp(player, -1)
     end
   end,
-  --TODO:回合结束清理标记，但没有看到标记，原因不明。
 }
 
 --------------------------------------------------
 --萨比萌
---角色马克：视幻
+--角色马克：可餐
 --------------------------------------------------
 
---local sabimeng_bimengjushou = General(extension,"sabimeng_bimengjushou", "individual", 6, 6, General.Female)
---sabimeng_bimengjushou:addSkill(v_shihuan)
---sabimeng_bimengjushou:addSkill(v_kecan)
+local sabimeng_bimengjushou = General(extension,"sabimeng_bimengjushou", "individual", 6, 6, General.Female)
+sabimeng_bimengjushou:addSkill(v_shihuan)
+sabimeng_bimengjushou:addSkill(v_kecan)
 
 --------------------------------------------------
 --蟹袭
---技能马克：指向线出现自己指向自己这种怎么处理还没规避好。
+--技能马克：
 --------------------------------------------------
 
 local v_xiexi = fk.CreateTriggerSkill{
@@ -1751,11 +1701,10 @@ local v_xiexi = fk.CreateTriggerSkill{
   on_use = function(self, event, target, player, data)
     --遍历全场所有角色，对持有此技能的角色询问其是否发动技能。
     local room = player.room
-    --if target ~= player then
-      --doindicate的两个参数均为integer类型，一般为角色id
-      --这个容易出问题之后先试试把它干了
-      --room:doIndicate(player.id,target.id)
-    --end
+    if target ~= player then
+      --doindicate的两个参数一个为integer，一个为table
+      room:doIndicate(player.id, { target.id })
+    end
     if not target.chained then
       target:setChainState(true)
     elseif target.chained then
@@ -1772,7 +1721,7 @@ local v_xiexi = fk.CreateTriggerSkill{
 
 --------------------------------------------------
 --归影
---技能马克：描述为对应角色摸了X张牌，最好是获得两张牌。
+--技能马克：
 --------------------------------------------------
 
 local v_guiying = fk.CreateTriggerSkill{
@@ -1823,7 +1772,7 @@ local v_guiying = fk.CreateTriggerSkill{
 
 --------------------------------------------------
 --阮卿言
---角色马克：蟹袭，归影
+--角色马克：
 --------------------------------------------------
 
 local ruanqingyan_hushanguiying = General(extension,"ruanqingyan_hushanguiying", "individual", 3, 3, General.Female)
