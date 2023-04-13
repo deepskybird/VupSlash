@@ -540,6 +540,90 @@ baishenyao_zhaijiahaibao:addSkill(v_chouka)
 baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 
 --------------------------------------------------
+--礼崩
+--TODO:拼点部分这个版本做不了，寄；礼崩禁止使用杀是否需要技能存在待定，看起来不需要
+--------------------------------------------------
+
+local v_libeng_prohibit = fk.CreateProhibitSkill{
+  name = "#v_libeng_prohibit",
+  prohibit_use = function(self, player, card)
+    return player:getMark("v_libeng_prohibit_slash-phase") > 0 
+      and card.trueName == "slash"
+  end,
+}
+local v_libeng_buff = fk.CreateTargetModSkill{
+  name = "#v_libeng_buff",
+  residue_func = function(self, player, skill, scope)
+    if player:hasSkill(self.name) and skill.trueName == "slash_skill"
+      and scope == Player.HistoryPhase and player:getMark("@v_libeng") > 0 then
+      return 1000
+    end
+  end,
+}
+local v_libeng_slash = fk.CreateTriggerSkill{
+  name = "v_libeng_slash",
+  --赋予输出型技能定义,
+  anim_type = "offensive",
+  --技能为锁定技，满足条件后强制发动
+  frequency = Skill.Compulsory,
+  --时机：目标确定后
+  events = {fk.TargetSpecified},
+  --触发条件：触发时机的角色为遍历到的角色，触发者拥有此技能，牌的真名为杀，遍历到的角色存在礼崩胜利标记
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and player:getMark("@v_libeng") > 0
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:removePlayerMark(player, "@v_libeng", 1)
+    data.disresponsive = true
+  end,
+}
+local v_libeng = fk.CreateActiveSkill{
+  name = "v_libeng",
+  anim_type = "offensive",
+  --如何检查自己是否可以拼点？
+  can_use = function(self, player)
+    return (not player:isKongcheng()) and player:getMark("v_libeng_prohibit_skill-phase") > 0 
+  end,
+  target_num = 1,
+  card_num = 1,
+  card_filter = function(self, to_select, selected, selected_targets)
+    if #selected == 1 then return false end
+    return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+  end,
+  --如何检查对方是否可以被拼点？
+  target_filter = function(self, to_select, selected)
+    local target = Fk:currentRoom():getPlayerById(to_select)
+    return #selected == 0 and to_select ~= Self.id and (not target:isKongcheng())
+  end,
+  on_use = function(self, room, effect)
+    --先拼点
+    local player = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.tos[1])
+    room:pindian{
+      from = player,
+      to = {target},
+      reason = self.name,
+      fromCard = effect.card,
+    }
+    --根据结果提供对应mark（怎么出结果？）
+  end,
+}
+
+v_libeng:addRelatedSkill(v_libeng_buff)
+v_libeng:addRelatedSkill(v_libeng_prohibit)
+v_libeng:addRelatedSkill(v_libeng_slash)
+
+--------------------------------------------------
+--秋凛子
+--角色马克：
+--------------------------------------------------
+
+local qiulinzi_wangyinwunv = General(extension, "qiulinzi_wangyinwunv", "psp", 4, 4, General.Female)
+qiulinzi_wangyinwunv:addSkill(v_libeng)
+--qiulinzi_wangyinwunv:addSkill(v_chaodu)
+
+--------------------------------------------------
 --咏星
 --------------------------------------------------
 

@@ -78,6 +78,16 @@ Fk:loadTranslationTable{
 	["v_yonglan"] = "慵懒",
 	[":v_yonglan"] = "每回合限一次，你需要使用【闪】响应【杀】时，你可以将一张点数大于此【杀】的手牌当【闪】使用。",
 	
+	--秋凛子
+	["qiulinzi_wangyinwunv"] = "秋凛子",
+	["&qiulinzi_wangyinwunv"] = "秋凛子",
+	["#qiulinzi_wangyinwunv"] = "网瘾巫女",
+	["$qiulinzi_wangyinwunv"] = "简单",
+	["designer:qiulinzi_wangyinwunv"] = "NSX",
+	["cv:qiulinzi_wangyinwunv"] = "",
+	["illustrator:qiulinzi_wangyinwunv"] = "Bison仓鼠",
+	["~qiulinzi_wangyinwunv"] = "",
+
 	--东爱璃
 	["dongaili_xingtu"] = "东爱璃",
 	["&dongaili_xingtu"] = "东爱璃",
@@ -93,6 +103,7 @@ Fk:loadTranslationTable{
 	["#v_yangge_damage_checker"] = "扬歌",
 	[":v_yangge"] = "结束阶段，若你未于本回合内造成过伤害，你可以<font color='#A9A9A9'>发动此技能</font>选择一项：1.翻面，视为使用一张【南蛮入侵】；2.弃置一张手牌，视为使用一张【桃园结义】。",
 	["@v_yangge"] = "请弃置一张手牌，视为使用 桃园结义<br/>否则你翻面，视为使用 南蛮入侵<br/><br/>操作提示：<br/>①桃园结义：选择一张手牌→确定；<br/>②南蛮入侵：取消。",
+
 
 	--novus
 	--小千村鼬鼬
