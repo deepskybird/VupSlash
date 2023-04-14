@@ -88,6 +88,26 @@ Fk:loadTranslationTable{
 	["illustrator:qiulinzi_wangyinwunv"] = "Bison仓鼠",
 	["~qiulinzi_wangyinwunv"] = "",
 
+	--星之谷米娅
+	["xingzhigumiya_mengmao"] = "星之谷米娅",
+	["&xingzhigumiya_mengmao"] = "星之谷米娅",
+	["#xingzhigumiya_mengmao"] = "星国萌猫",
+	["$xingzhigumiya_mengmao"] = "简单",
+	["designer:xingzhigumiya_mengmao"] = "NSX",
+	["cv:xingzhigumiya_mengmao"] = "",
+	["illustrator:xingzhigumiya_mengmao"] = "",
+	["~xingzhigumiya_mengmao"] = "",
+	["v_baosha"] = "薄纱",
+	["#v_baosha_prohibit"] = "薄纱",
+	--[":v_baosha"] = "锁定技，你的第一个回合开始前，你不是所有角色使用牌的合法目标。",
+	[":v_baosha"] = "锁定技，你不是所有角色使用牌的合法目标。回合开始时，你失去此技能。",
+	["$v_baosha"] = "",
+	["v_xianwei"] = "衔尾",
+	--["#v_xianwei_buff"] = "衔尾",
+	[":v_xianwei"] = "出牌阶段，若你已受伤，你可以将X＋1张牌当【无中生有】使用。（X为本阶段内你以此法使用【无中生有】的次数）",
+	["$v_xianwei"] = "",
+	["@v_xianwei_count-phase"] = "衔尾",
+
 	--东爱璃
 	["dongaili_xingtu"] = "东爱璃",
 	["&dongaili_xingtu"] = "东爱璃",
@@ -103,7 +123,6 @@ Fk:loadTranslationTable{
 	["#v_yangge_damage_checker"] = "扬歌",
 	[":v_yangge"] = "结束阶段，若你未于本回合内造成过伤害，你可以<font color='#A9A9A9'>发动此技能</font>选择一项：1.翻面，视为使用一张【南蛮入侵】；2.弃置一张手牌，视为使用一张【桃园结义】。",
 	["@v_yangge"] = "请弃置一张手牌，视为使用 桃园结义<br/>否则你翻面，视为使用 南蛮入侵<br/><br/>操作提示：<br/>①桃园结义：选择一张手牌→确定；<br/>②南蛮入侵：取消。",
-
 
 	--novus
 	--小千村鼬鼬
@@ -394,6 +413,23 @@ Fk:loadTranslationTable{
 	[":v_chengzhang"] = "你令一名角色回复体力后，若其体力值为1，你可以<font color='#A9A9A9'>发动此技能</font>，随机使用牌堆、弃牌堆中的一张装备牌。",
 	--[":v_chengzhang"] = "你令一名角色回复体力后，若其体力值为1，你可以随机使用牌堆、弃牌堆中的一张装备牌。",
 	["$v_chengzhang"] = "",
+
+	--奈伊
+	["naiyi_chongqunzhixin"] = "奈伊",
+	["&naiyi_chongqunzhixin"] = "奈伊",
+	["#naiyi_chongqunzhixin"] = "虫群之心",
+	["$naiyi_chongqunzhixin"] = "一般",
+	["designer:naiyi_chongqunzhixin"] = "月音风源",
+	["cv:naiyi_chongqunzhixin"] = "",
+	["illustrator:naiyi_chongqunzhixin"] = "",
+	["~naiyi_chongqunzhixin"] = "",
+	["v_caiji"] = "采集",
+	[":v_caiji"] = "结束阶段，若你的手牌数=体力值且本回合你未造成过伤害，你可以<font color='#A9A9A9'>发动此技能</font>，将手牌数补至4张。",
+	["$v_caiji"] = "",
+	["v_caiji_choice"] = "你可以发动“采集”，摸 %arg 张牌",
+	["v_jinhua"] = "进化",
+	[":v_jinhua"] = "锁定技，每当你首次完成以下一项时，你增加1点体力上限，回复1点体力：<br>①对一名体力值≤0的角色使用【桃】<br>②于回合外不因“应援”获得手牌<br>③装备区内的牌数≥3。",
+	["$v_jinhua"] = "",
 
 	--模式
 	["aaa_role_mode"] = "身份模式",
