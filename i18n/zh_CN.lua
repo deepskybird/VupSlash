@@ -107,6 +107,11 @@ Fk:loadTranslationTable{
 	[":v_xianwei"] = "出牌阶段，若你已受伤，你可以将X＋1张牌当【无中生有】使用。（X为本阶段内你以此法使用【无中生有】的次数）",
 	["$v_xianwei"] = "",
 	["@v_xianwei_count-phase"] = "衔尾",
+	["v_xingmao"] = "星猫",
+	["@@v_xingmao_prohibit_slash-turn"] = "星猫基本牌",
+	[":v_xingmao"] = "锁定技，你使用【闪】响应【杀】后，此【杀】的使用者本回合不能使用基本牌。",
+	["$v_xingmao"] = "",
+	["#v_xingmao_log"] = "由于“%arg”的效果，%to 本回合不能使用 基本牌",
 
 	--东爱璃
 	["dongaili_xingtu"] = "东爱璃",

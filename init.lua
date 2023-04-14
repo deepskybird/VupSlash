@@ -546,6 +546,9 @@ baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 
 -- local v_libeng_prohibit = fk.CreateProhibitSkill{
 --   name = "#v_libeng_prohibit",
+-- is_prohibited = function(self, from, to, card)
+--   return false
+-- end,
 --   prohibit_use = function(self, player, card)
 --     return player:getMark("v_libeng_prohibit_slash-phase") > 0 
 --       and card.trueName == "slash"
@@ -625,7 +628,7 @@ baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 
 --------------------------------------------------
 --薄纱
---TODO:
+--TODO:AOE由于指定方式问题，目前无法被禁止。
 --------------------------------------------------
 
 local v_baosha_prohibit = fk.CreateProhibitSkill{
@@ -682,8 +685,15 @@ local v_xianwei = fk.CreateViewAsSkill{
   pattern = "ex_nihilo",
   card_filter = function(self, to_select, selected)
     local room = Fk:currentRoom()
-    local pla = room.current
-    if #selected < pla:getMark("@v_xianwei_count-phase") +1 then
+    local pls = room.players
+    local pp = nil
+    --通过是否处于出牌阶段确认是否是该玩家。
+    for _,p in ipairs(pls) do
+      if p.phase == Player.Play then
+        pp = p
+      end
+    end
+    if #selected < pp:getMark("@v_xianwei_count-phase") +1 then
       --后续在这里补充不能被弃置的判定       
       return true
     end
@@ -691,9 +701,15 @@ local v_xianwei = fk.CreateViewAsSkill{
   end,
   view_as = function(self, cards)
     local room = Fk:currentRoom()
-    --查无pla
-    local pla = room.current
-    if #cards ~= ( pla:getMark("@v_xianwei_count-phase") +1 ) then
+    local pls = room.players
+    local pp = nil
+    --通过是否处于出牌阶段确认是否是该玩家。
+    for _,p in ipairs(pls) do
+      if p.phase == Player.Play then
+        pp = p
+      end
+    end
+    if #cards ~= ( pp:getMark("@v_xianwei_count-phase") +1 ) then
       return nil
     end
     local c = Fk:cloneCard("ex_nihilo")
@@ -701,7 +717,6 @@ local v_xianwei = fk.CreateViewAsSkill{
 			c:addSubcard(cd)
 		end
     c.skillName = self.name
-    print(c.skillName)
     return c
   end,
   enabled_at_play = function(self, player)
@@ -728,6 +743,46 @@ local v_xianwei_count = fk.CreateTriggerSkill{
 v_xianwei:addRelatedSkill(v_xianwei_count)
 
 --------------------------------------------------
+--星猫
+--TODO:触发成功，但mark没加；需要测试对虚拟杀的效果
+--------------------------------------------------
+
+local v_xingmao_prohibit = fk.CreateProhibitSkill{
+  name = "#v_xingmao_prohibit",
+  is_prohibited = function(self, from, to, card)
+    return false
+  end,
+  prohibit_use = function(self, player, card)
+    return player:getMark("@@v_xingmao_prohibit_slash-turn") > 0 
+      and card.type == Card.TypeBasic
+  end,
+}
+local v_xingmao = fk.CreateTriggerSkill{
+  name = "v_xingmao",
+  anim_type = "defensive",
+  --技能为锁定技，满足条件后强制发动
+  frequency = Skill.Compulsory,
+  events = {fk.CardUseFinished},
+  can_trigger = function(self, event, target, player, data)
+    if not (target == player and player:hasSkill(self.name)) then return false end
+    local use = data
+    if use.card.name == "jink" and use.toCard and use.toCard.trueName == "slash" then
+      local effect = use.responseToEvent
+      return effect.to == player.id
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local effect = data.responseToEvent
+    local slasher = room:getPlayerById(effect.from)
+    --你 为 什 么 不 加 m a r k
+    room:addPlayerMark(slasher, "@@v_xingmao_prohibit_slash-turn", 1)
+  end,
+}
+
+v_xingmao:addRelatedSkill(v_xingmao_prohibit)
+
+--------------------------------------------------
 --星之谷米娅
 --角色马克：衔尾
 --------------------------------------------------
@@ -735,7 +790,7 @@ v_xianwei:addRelatedSkill(v_xianwei_count)
 local xingzhigumiya_mengmao = General(extension, "xingzhigumiya_mengmao", "psp", 2, 3, General.Female)
 xingzhigumiya_mengmao:addSkill(v_baosha)
 xingzhigumiya_mengmao:addSkill(v_xianwei)
-
+xingzhigumiya_mengmao:addSkill(v_xingmao)
 
 --------------------------------------------------
 --咏星
@@ -1259,7 +1314,7 @@ local v_motiao = fk.CreateTriggerSkill{
       local targets = data
       local motiao_tar = AimGroup:getAllTargets(targets.tos)
       for _, p in ipairs(motiao_tar) do
-        print(p)
+        --print(p)
         local pls = room:getPlayerById(p)
         if pls == player then
           motiao_useornot = true
@@ -2744,9 +2799,8 @@ v_caiji:addRelatedSkill(v_caiji_damage_checker)
 --------------------------------------------------
 --进化
 --技能马克：
--- TODO：体力上限增加后前端不增加血量。
+-- TODO：
 -- 应援暂时不用管，等后续实装类似的通用技能再说。
--- 也许分成三个技能更靠谱一点？
 --------------------------------------------------
 
 local v_jinhua = fk.CreateTriggerSkill{
@@ -2766,18 +2820,17 @@ local v_jinhua = fk.CreateTriggerSkill{
   --             （未完成）条件1：被遍历到的角色不存在对应标记2；被遍历到的角色处于回合外；
   --             遍历所有的牌牌移向被遍历到的角色；牌移向手牌区；牌移动的技能名不为“应援”（后补）。
   --             条件2：被遍历到的角色不存在对应标记2；被遍历到的角色装备区牌数量>=3。
-
-  --（暂时貌似不需要注意）需要注意卡牌移动中和游戏开始时第一轮摸牌的契合。萌写的时候均有第一轮不计的说法。
   can_trigger = function(self, event, target, player, data)
     if event == fk.TargetSpecified then
+      local room = player.room
       local targets = data
       local jinhua_tar = AimGroup:getAllTargets(targets.tos)
       return target == player and player:hasSkill(self.name)
       and data.card.name == "peach"
-      and jinhua_tar[1].hp <= 0
+      and room:getPlayerById(jinhua_tar[1]).hp <= 0
       and player:getMark("v_jinhua_1") == 0
     elseif event == fk.AfterCardsMove then
-      local equip = player:getCardIds(Player.Equip)
+      local equips = player:getCardIds(Player.Equip)
       local ret21 = false
       for _, d in ipairs(data) do
         if d.toArea == Player.Hand and d.to == player.id then
@@ -2786,19 +2839,31 @@ local v_jinhua = fk.CreateTriggerSkill{
         end
       end
       local ret2 = player:getMark("v_jinhua_2") == 0 and player.phase == Player.NotActive and ret21
-      local ret3 = player:getMark("v_jinhua_3") == 0 and #equip >= 3
-      return target == player and player:hasSkill(self.name) and ( ret2 or ret3 )
+      local ret3 = player:getMark("v_jinhua_3") == 0 and #equips >= 3
+      print(ret3)
+      print(player.general)
+      print(ret2)
+      return player:hasSkill(self.name) and ( ret2 or ret3 )
     end
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    --（未完成）增加对应的标记。
+    --增加对应的标记(暂时通过手牌进入的区域划分)。
     if event == fk.TargetSpecified then
       room:addPlayerMark(player, "v_jinhua_1", 1)
     elseif event == fk.AfterCardsMove then
-      
+      local ret22 = false
+      for _, d in ipairs(data) do
+        if d.toArea == Player.Hand then
+          ret22 = true
+        end
+      end
+      if ret22 == true then
+        room:addPlayerMark(player, "v_jinhua_2", 1)
+      elseif ret22 == false then
+        room:addPlayerMark(player, "v_jinhua_3", 1)
+      end
     end
-    local room = player.room
     --增加一点体力上限，回复一点体力。
     room:changeMaxHp(player, 1)
     room:recover{
