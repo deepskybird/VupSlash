@@ -627,6 +627,95 @@ baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 -- qiulinzi_wangyinwunv:addSkill(v_chaodu)
 
 --------------------------------------------------
+--逐猎
+--------------------------------------------------
+
+local v_zhulie = fk.CreateTargetModSkill{
+  name = "v_zhulie",
+  residue_func = function(self, player, skill, scope, card)
+    if player:hasSkill(self.name) and card and card.color == Card.Red then
+      return 1000
+    end
+  end,
+  distance_limit_func =  function(self, player, skill, card)
+    if player:hasSkill(self.name) and card and card.color == Card.Black then
+      return 1000
+    end
+  end,
+}
+
+--------------------------------------------------
+--混音
+--------------------------------------------------
+
+local v_hunyin = fk.CreateTriggerSkill{
+  name = "v_hunyin",
+  --赋予进攻型技能定义
+  anim_type = "offensive",
+  --时机：阶段开始时，目标指定后
+  events = {fk.EventPhaseStart, fk.TargetSpecified},
+  --触发条件：(已完成)
+  --（阶段开始时）触发时机的角色为遍历到的角色；遍历到的角色具有本技能；
+  --              被遍历到的角色处于回合开始阶段；
+  --              牌堆中的牌>=2张；
+  --（目标指定时）触发时机的角色为遍历到的角色；遍历到的角色具有本技能；
+  --              遍历到的角色具有某种标记。
+  --              使用的牌为杀
+  can_trigger = function(self, event, target, player, data)
+    local room = player.room
+    if event == fk.EventPhaseStart then
+      return target == player and player:hasSkill(self.name)
+      and player.phase == Player.Start
+      and #room.draw_pile >= 2
+    elseif event == fk.TargetSpecified then
+      return target == player and player:hasSkill(self.name)
+      and player:getMark("@@v_hunyin_buff-turn") > 0
+      and data.card.trueName == "slash"
+    end
+  end,
+  on_cost = function(self, event, target, player, data)
+    --确认是否发动技能。
+    if event == fk.EventPhaseStart then
+      local room = player.room
+      if room:askForSkillInvoke(player, self.name, data) then
+        return true
+      end
+    --满足技能发动要求后，锁定发动。
+    elseif event == fk.TargetSpecified then
+      return true
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    --牌堆顶展示两张牌。【初步完成，请确认showcards是给id用还是给card用！然后再确认能不能不用player来showcard】
+    --比较两张牌的颜色，根据颜色决定是否增加BUFF标记。【后续确认效果】
+    --询问是否弃牌。
+    if event == fk.EventPhaseStart then
+      local ids = {}
+      for i = 1, 2, 1 do
+        table.insert(ids, room.draw_pile[i])
+      end
+      player:showCards(ids)
+      if Fk:getCardById(ids[1]).color ~= Fk:getCardById(ids[2]).color then
+        room:addPlayerMark(player, "@@v_hunyin_buff-turn", 1)
+      end
+    --你使用的【杀】不可被【闪】响应
+    elseif event == fk.TargetSpecified then
+      data.disresponsive = true
+    end
+  end,
+}
+
+--------------------------------------------------
+--莲汰
+--角色马克：
+--------------------------------------------------
+
+local liantai_bingyuanlangwang = General(extension, "liantai_bingyuanlangwang", "psp", 4, 4, General.Male)
+liantai_bingyuanlangwang:addSkill(v_zhulie)
+liantai_bingyuanlangwang:addSkill(v_hunyin)
+
+--------------------------------------------------
 --薄纱
 --TODO:AOE由于指定方式问题，目前无法被禁止。
 --------------------------------------------------
@@ -744,7 +833,7 @@ v_xianwei:addRelatedSkill(v_xianwei_count)
 
 --------------------------------------------------
 --星猫
---TODO:mark没显示，实际效果后续确定；需要测试对虚拟杀的效果
+--TODO:需要测试对虚拟杀的效果
 --------------------------------------------------
 
 local v_xingmao_prohibit = fk.CreateProhibitSkill{
@@ -1293,7 +1382,7 @@ local v_motiao = fk.CreateTriggerSkill{
   name = "v_motiao",
   --赋予摸牌型技能定义
   anim_type = "drawcard",
-  --时机：阶段开始时，目标指定后, 造成伤害后
+  --时机：阶段开始时，目标指定后
   events = {fk.EventPhaseStart, fk.TargetSpecified},
   --触发条件：
   --（阶段开始时）触发时机的角色为遍历到的角色；遍历到的角色具有本技能；
