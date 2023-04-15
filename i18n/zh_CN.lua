@@ -108,7 +108,7 @@ Fk:loadTranslationTable{
 	["$v_xianwei"] = "",
 	["@v_xianwei_count-phase"] = "衔尾",
 	["v_xingmao"] = "星猫",
-	["@@v_xingmao_prohibit_slash-turn"] = "星猫基本牌",
+	["@v_xingmao_prohibit_slash-turn"] = "星猫基本牌",
 	[":v_xingmao"] = "锁定技，你使用【闪】响应【杀】后，此【杀】的使用者本回合不能使用基本牌。",
 	["$v_xingmao"] = "",
 	["#v_xingmao_log"] = "由于“%arg”的效果，%to 本回合不能使用 基本牌",
@@ -290,7 +290,7 @@ Fk:loadTranslationTable{
 	--[":v_fangxian"] = "你可以跳过摸牌阶段，本回合的结束阶段你选择一项：1.摸两张牌；2.令一名角色回复1点体力。",
 	["$v_fangxian"] = "",
 	["v_fangxian"] = "芳仙",
-	["@@v_fangxian"] = "芳仙",
+	["@@v_fangxian-turn"] = "芳仙",
 	["#v_fangxian-target"] = "你可以令一名角色回复1点体力，或令你摸两张牌<br/>操作提示：<br/>①回复体力：选择一名角色→确定<br/>②摸两张牌：取消",
   	--[":mark:&v_fangxian"] = "结束阶段可以摸两张牌或令一名角色回复体力",
 
@@ -396,8 +396,8 @@ Fk:loadTranslationTable{
   	[":v_jiaoduo"] = "每回合限一次，你可以<font color='#A9A9A9'>发动此技能</font>，跳过 <font color='#9400D3'>判定/摸牌/出牌</font> 阶段，本回合你的下一个阶段结束时，将手牌数调整至与此技能发动时相同（至多摸至体力上限张数）。",
 	--[":v_jiaoduo"] = "每回合限一次，你可以跳过 <font color='#9400D3'>判定/摸牌/出牌</font> 阶段，本回合你的下一个阶段结束时，将手牌数调整至与此技能发动时相同（至多摸至体力上限张数）。",
   	["$v_jiaoduo"] = "",
-  	["@v_jiaoduo_card"] = "娇惰",
-	["@@v_jiaoduo_nocard"] = "无手牌",
+  	["@v_jiaoduo_card-turn"] = "娇惰",
+	["@@v_jiaoduo_nocard-turn"] = "无手牌",
   	["#v_jiaoduo_choice"] = "你可以跳过 %arg 阶段发动“娇惰”，下个阶段结束时将手牌数调整至 %arg2",
 	--["v_jiaoduo:choice"] = "你可以跳过 %src 阶段发动“娇惰”，下个阶段结束时将手牌数调整至 %dest",
 

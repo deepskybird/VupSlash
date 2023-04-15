@@ -694,7 +694,7 @@ local v_xianwei = fk.CreateViewAsSkill{
       end
     end
     if #selected < pp:getMark("@v_xianwei_count-phase") +1 then
-      --后续在这里补充不能被弃置的判定       
+      --后续在这里补充不能被弃置的判定
       return true
     end
     return false
@@ -744,7 +744,7 @@ v_xianwei:addRelatedSkill(v_xianwei_count)
 
 --------------------------------------------------
 --星猫
---TODO:触发成功，但mark没加；需要测试对虚拟杀的效果
+--TODO:mark没显示，实际效果后续确定；需要测试对虚拟杀的效果
 --------------------------------------------------
 
 local v_xingmao_prohibit = fk.CreateProhibitSkill{
@@ -775,8 +775,7 @@ local v_xingmao = fk.CreateTriggerSkill{
     local room = player.room
     local effect = data.responseToEvent
     local slasher = room:getPlayerById(effect.from)
-    --你 为 什 么 不 加 m a r k
-    room:addPlayerMark(slasher, "@@v_xingmao_prohibit_slash-turn", 1)
+    room:setPlayerMark(slasher, "@@v_xingmao_prohibit_slash-turn", 1)
   end,
 }
 
@@ -784,7 +783,7 @@ v_xingmao:addRelatedSkill(v_xingmao_prohibit)
 
 --------------------------------------------------
 --星之谷米娅
---角色马克：衔尾
+--角色马克：薄纱，衔尾，星猫
 --------------------------------------------------
 
 local xingzhigumiya_mengmao = General(extension, "xingzhigumiya_mengmao", "psp", 2, 3, General.Female)
@@ -1706,9 +1705,9 @@ local v_fangxian_choice = fk.CreateTriggerSkill{
     local change = data
     if change.to == Player.Draw then
         --技能被无效化的效果试作
-        if self:isEffectable(player) then
-          room:setPlayerMark(player, "@@v_fangxian", 1)
-        end
+        --if self:isEffectable(player) then
+        room:setPlayerMark(player, "@@v_fangxian-turn", 1)
+        --end
         --此处不使用player:skip()而使用return true原因如下：
         --N神原话：触发技被触发的源头为Gamelogic::trigger（这个可以参考文档）
         --根据源码serverplay.lua中play函数的表示（其用于每个阶段的衍生），每个阶段开始时会先检索一次跳过阶段
@@ -1729,7 +1728,7 @@ local v_fangxian = fk.CreateTriggerSkill{
   --触发条件：遍历到的角色处于结束阶段，通过芳仙跳过摸牌阶段。
   can_trigger = function(self, event, target, player, data)
     local room = player.room
-    if player.phase == Player.Finish and player:getMark("@@v_fangxian") > 0 then
+    if player.phase == Player.Finish and player:getMark("@@v_fangxian-turn") > 0 then
       --在场且存活
       --for _, p in ipairs(room:getAlivePlayers()) do
       return true
@@ -1742,7 +1741,7 @@ local v_fangxian = fk.CreateTriggerSkill{
   on_use = function(self, event, target, player, data)
     local room = player.room
     --阶段变化时，实现“是否跳摸牌”的效果。
-    if player.phase == Player.Finish and player:getMark("@@v_fangxian") > 0 then
+    if player.phase == Player.Finish and player:getMark("@@v_fangxian-turn") > 0 then
       --制作一个囊括所有存活角色的table-targets
       local alives = room:getAlivePlayers()
       local prompt = "#v_fangxian-target"
@@ -1760,7 +1759,7 @@ local v_fangxian = fk.CreateTriggerSkill{
         --room:doAnimate(1, player:objectName(), to:objectName()) --doAnimate 1:产生一条从前者到后者的指示线
         if player_to ~= player then
           --doindicate的两个参数均为integer类型，一般为角色id
-          room:doIndicate(player.id,to)
+          room:doIndicate(player.id, to)
         end
         room:recover{
           who = player_to,
@@ -1775,22 +1774,22 @@ local v_fangxian = fk.CreateTriggerSkill{
   end,
 
   --目前萌以前写的标记一键删除姬还没做出来，因此还是用比较原始的refresh处理。
-  refresh_events = {fk.EventPhaseStart},
-  can_refresh = function(self, event, target, player, data)
-    if not (target == player and player:hasSkill(self.name)) then
-      return false
-    end
-    if event == fk.EventPhaseStart then
-      return player.phase == Player.NotActive
-    end
-  end,
-  on_refresh = function(self, event, target, player, data)
-    local room = player.room
-    room:setPlayerMark(player, "@@v_fangxian", 0)
-  end
+  -- refresh_events = {fk.EventPhaseStart},
+  -- can_refresh = function(self, event, target, player, data)
+  --   if not (target == player and player:hasSkill(self.name)) then
+  --     return false
+  --   end
+  --   if event == fk.EventPhaseStart then
+  --     return player.phase == Player.NotActive
+  --   end
+  -- end,
+  -- on_refresh = function(self, event, target, player, data)
+  --   local room = player.room
+  --   room:setPlayerMark(player, "@@v_fangxian-turn", 0)
+  -- end
 }
 
-table.insert(turn_end_clear_mark, "@@v_fangxian")
+-- table.insert(turn_end_clear_mark, "@@v_fangxian-turn")
 
 v_fangxian:addRelatedSkill(v_fangxian_choice)
 
@@ -2463,7 +2462,7 @@ local v_jiaoduo = fk.CreateTriggerSkill{
       and exist_or_not(player, change.to)
     elseif event == fk.EventPhaseEnd then
       return target == player and player:hasSkill(self.name)
-      and player:getMark("v_jiaoduo_using") > 0
+      and player:getMark("v_jiaoduo_using-turn") > 0
     end
   end,
   on_cost = function(self, event, target, player, data)
@@ -2471,7 +2470,6 @@ local v_jiaoduo = fk.CreateTriggerSkill{
     if event == fk.EventPhaseChanging then
       local room = player.room
       local change = data
-      --print("EventPhaseChanging")
       local prompt = "#v_jiaoduo_choice:::"..phase_string(change.to)..":"..0
       --print(prompt)
       local cards = {}
@@ -2493,7 +2491,7 @@ local v_jiaoduo = fk.CreateTriggerSkill{
         return true
       end
     --满足技能发动要求后，锁定发动。
-    elseif event == fk.EventPhaseEnd and (player:getMark("@v_jiaoduo_card") > 0 or player:getMark("@@v_jiaoduo_nocard") > 0) then
+    elseif event == fk.EventPhaseEnd and (player:getMark("@v_jiaoduo_card-turn") > 0 or player:getMark("@@v_jiaoduo_nocard-turn") > 0) then
       return true
     end
   end,
@@ -2508,22 +2506,22 @@ local v_jiaoduo = fk.CreateTriggerSkill{
         table.insert(cards, p)
       end
       local x = #(cards)
-      room:setPlayerMark(player, "v_jiaoduo_using", 1)
+      room:setPlayerMark(player, "v_jiaoduo_using-turn", 1)
       if x > 0 then
-        room:setPlayerMark(player, "@v_jiaoduo_card", x)
+        room:setPlayerMark(player, "@v_jiaoduo_card-turn", x)
       else
-        room:setPlayerMark(player, "@@v_jiaoduo_nocard", 1)
+        room:setPlayerMark(player, "@@v_jiaoduo_nocard-turn", 1)
       end
       return true
     elseif event == fk.EventPhaseEnd then
       --清空使用状态，将之前记下来的手牌数转录到local变量z中
-      room:setPlayerMark(player, "v_jiaoduo_using", 0)
+      room:setPlayerMark(player, "v_jiaoduo_using-turn", 0)
       local z = 0
-      if player:getMark("@@v_jiaoduo_nocard") > 0 then
-        room:setPlayerMark(player, "@@v_jiaoduo_nocard", 0)
-      elseif player:getMark("@v_jiaoduo_card") > 0 then
-        z = player:getMark("@v_jiaoduo_card")
-        room:setPlayerMark(player, "@v_jiaoduo_card", 0)
+      if player:getMark("@@v_jiaoduo_nocard-turn") > 0 then
+        room:setPlayerMark(player, "@@v_jiaoduo_nocard-turn", 0)
+      elseif player:getMark("@v_jiaoduo_card-turn") > 0 then
+        z = player:getMark("@v_jiaoduo_card-turn")
+        room:setPlayerMark(player, "@v_jiaoduo_card-turn", 0)
       end
       --现有手牌小于/大于之前记录值之后的处理。
       if player:getHandcardNum() < math.min(player.maxHp, z) then
@@ -2537,26 +2535,26 @@ local v_jiaoduo = fk.CreateTriggerSkill{
   end,
 
   --目前萌以前写的标记一键删除姬还没做出来，因此还是用比较原始的refresh处理。
-  refresh_events = {fk.EventPhaseStart},
-  can_refresh = function(self, event, target, player, data)
-    if not (target == player and player:hasSkill(self.name)) then
-      return false
-    end
-    if event == fk.EventPhaseStart then
-      return player.phase == Player.NotActive
-    end
-  end,
-  on_refresh = function(self, event, target, player, data)
-    local room = player.room
-    room:setPlayerMark(player, "v_jiaoduo_using", 0)
-    room:setPlayerMark(player, "@v_jiaoduo_card", 0)
-    room:setPlayerMark(player, "@@v_jiaoduo_nocard", 0)
-  end
+  -- refresh_events = {fk.EventPhaseStart},
+  -- can_refresh = function(self, event, target, player, data)
+  --   if not (target == player and player:hasSkill(self.name)) then
+  --     return false
+  --   end
+  --   if event == fk.EventPhaseStart then
+  --     return player.phase == Player.NotActive
+  --   end
+  -- end,
+  -- on_refresh = function(self, event, target, player, data)
+  --   local room = player.room
+  --   room:setPlayerMark(player, "v_jiaoduo_using-turn", 0)
+  --   room:setPlayerMark(player, "@v_jiaoduo_card-turn", 0)
+  --   room:setPlayerMark(player, "@@v_jiaoduo_nocard-turn", 0)
+  -- end
 }
 
-table.insert(turn_end_clear_mark, "v_jiaoduo_using")
-table.insert(turn_end_clear_mark, "@v_jiaoduo_card")
-table.insert(turn_end_clear_mark, "@@v_jiaoduo_nocard")
+-- table.insert(turn_end_clear_mark, "v_jiaoduo_using-turn")
+-- table.insert(turn_end_clear_mark, "@v_jiaoduo_card-turn")
+-- table.insert(turn_end_clear_mark, "@@v_jiaoduo_nocard-turn")
 
 --------------------------------------------------
 --风野慵
