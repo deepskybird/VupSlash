@@ -111,7 +111,7 @@ Fk:loadTranslationTable{
 	["@@v_hunyin_buff-turn"] = "混音",
 	--[":mark:&hunyin_buff"] = "本回合使用的【杀】不能被【闪】响应",
 	["v_hunyin_throw"] = "混音",
-	["v_hunyin_throw:choice"] = "你可以将展示的牌置入弃牌堆",
+	["v_hunyin_throw_choice"] = "你可以将展示的牌置入弃牌堆",
 	["#v_hunyin_throw_log"] = "%from 将 %arg 张牌置入弃牌堆",
 	["v_hunyin_different"] = "颜色不同",
 	["v_hunyin_same"] = "颜色相同",
@@ -172,7 +172,7 @@ Fk:loadTranslationTable{
 	[":v_xixue"] = "你于出牌阶段内使用牌时，若此牌与你使用的上一张牌花色不同且颜色相同，你可以摸一张牌。",
 	["$v_xixue"] = "",
 	["@v_xixue"] = "袭穴",
-	["@v_xixue_mark"] = "袭穴",
+	["@v_xixue_mark-phase"] = "袭穴",
 
 
 	--废萌
@@ -241,7 +241,7 @@ Fk:loadTranslationTable{
 	["illustrator:xianyu_xiangluancuxian"] = "",
 	["~xianyu_xiangluancuxian"] = "",
 	["v_motiao"] = "抹挑",
-	["v_motiao_using"] = "抹挑",
+	["v_motiao_using-turn"] = "抹挑",
 	--[":v_motiao"] = "你于出牌阶段内使用牌指定自己为目标之一后，你可以摸一张牌。<br/><font color='#B22222'>使用此技能的回合，你只能造成1点伤害。</font>",
 	[":v_motiao"] = "准备阶段，你可以<font color='#A9A9A9'>发动此技能</font>，本回合内你只能造成1点伤害，你使用牌指定自己为目标之一后，摸一张牌。",
   	--[":v_motiao"] = "准备阶段，你可以，本回合内你只能造成1点伤害，你使用牌指定自己为目标之一后，摸一张牌。",
@@ -257,7 +257,7 @@ Fk:loadTranslationTable{
 	["$v_motiao9"] = "宫（滚奏）",
 	["$v_motiao10"] = "徵（滚奏）",
 	["v_lianzou"] = "连奏",
-	["@v_lianzou_count"] = "连奏蓄力",
+	["@v_lianzou_count-turn"] = "连奏蓄力",
 	[":v_lianzou"] = "限定技，出牌阶段结束时，若你本阶段内使用的牌点数和≥50，你可以<font color='#A9A9A9'>发动此技能</font>，<font color='#9400D3'>连续判定</font>直到判定牌点数和≥50，你获得<font color='#9400D3'>这些判定牌</font>。",
   	--[":v_lianzou"] = "限定技，出牌阶段结束时，若你本阶段内使用的牌点数和≥50，你可以<font color='#9400D3'>连续判定</font>直到判定牌点数和≥50，你获得<font color='#9400D3'>这些判定牌</font>。",
 	["$v_lianzou1"] = "琶音",
