@@ -568,7 +568,7 @@ baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 --   residue_func = function(self, player, skill, scope)
 --     if player:hasSkill(self.name) and skill.trueName == "slash_skill"
 --       and scope == Player.HistoryPhase and player:getMark("@v_libeng") > 0 then
---       return 1000
+--       return 999
 --     end
 --   end,
 -- }
@@ -637,27 +637,27 @@ baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 
 --------------------------------------------------
 --逐猎
---TODO:红牌无次数限制未生效；黑牌无距离限制顺手牵羊未生效。
+--TODO:card == nil（呆滞）
 --------------------------------------------------
 
-local v_zhulie = fk.CreateTargetModSkill{
-  name = "v_zhulie",
-  residue_func = function(self, player, skill, scope, card)
-    if player:hasSkill(self.name) 
-      and card 
-      and card.color == Card.Red 
-      and scope == Player.HistoryPhase then
-      return 1000
-    end
-  end,
-  distance_limit_func =  function(self, player, skill, card)
-    if player:hasSkill(self.name) 
-      and card 
-      and card.color == Card.Black then
-      return 1000
-    end
-  end,
-}
+-- local v_zhulie = fk.CreateTargetModSkill{
+--   name = "v_zhulie",
+--   residue_func = function(self, player, skill, scope, card)
+--     if player:hasSkill(self.name) 
+--       --and card 
+--       and card.color == Card.Red 
+--       and scope == Player.HistoryPhase then
+--       return 999
+--     end
+--   end,
+--   distance_limit_func =  function(self, player, skill, card)
+--     if player:hasSkill(self.name) 
+--       --and card 
+--       and card.color == Card.Black then
+--       return 999
+--     end
+--   end,
+-- }
 
 --------------------------------------------------
 --混音
@@ -749,8 +749,9 @@ local v_hunyin = fk.CreateTriggerSkill{
 --------------------------------------------------
 
 local liantai_bingyuanlangwang = General(extension, "liantai_bingyuanlangwang", "psp", 4, 4, General.Male)
-liantai_bingyuanlangwang:addSkill(v_zhulie)
+--liantai_bingyuanlangwang:addSkill(v_zhulie)
 liantai_bingyuanlangwang:addSkill(v_hunyin)
+--liantai_bingyuanlangwang:addSkill(v_cheat)
 
 --------------------------------------------------
 --薄纱
