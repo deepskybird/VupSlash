@@ -637,27 +637,24 @@ baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 
 --------------------------------------------------
 --逐猎
---TODO:card == nil（呆滞）
 --------------------------------------------------
 
--- local v_zhulie = fk.CreateTargetModSkill{
---   name = "v_zhulie",
---   residue_func = function(self, player, skill, scope, card)
---     if player:hasSkill(self.name) 
---       --and card 
---       and card.color == Card.Red 
---       and scope == Player.HistoryPhase then
---       return 999
---     end
---   end,
---   distance_limit_func =  function(self, player, skill, card)
---     if player:hasSkill(self.name) 
---       --and card 
---       and card.color == Card.Black then
---       return 999
---     end
---   end,
--- }
+local v_zhulie = fk.CreateTargetModSkill{
+  name = "v_zhulie",
+  residue_func = function(self, player, skill, scope, card)
+    if player:hasSkill(self.name) 
+      and card.color == Card.Red 
+      and scope == Player.HistoryPhase then
+      return 999
+    end
+  end,
+  distance_limit_func =  function(self, player, skill, card)
+    if player:hasSkill(self.name) 
+      and card.color == Card.Black then
+      return 999
+    end
+  end,
+}
 
 --------------------------------------------------
 --混音
@@ -749,9 +746,9 @@ local v_hunyin = fk.CreateTriggerSkill{
 --------------------------------------------------
 
 local liantai_bingyuanlangwang = General(extension, "liantai_bingyuanlangwang", "psp", 4, 4, General.Male)
---liantai_bingyuanlangwang:addSkill(v_zhulie)
+liantai_bingyuanlangwang:addSkill(v_zhulie)
 liantai_bingyuanlangwang:addSkill(v_hunyin)
---liantai_bingyuanlangwang:addSkill(v_cheat)
+-- liantai_bingyuanlangwang:addSkill(v_cheat)
 
 --------------------------------------------------
 --薄纱
@@ -1007,37 +1004,39 @@ local v_yangge = fk.CreateTriggerSkill{
     local room = player.room
     local peach_or_not = room:askForCard(player, 1, 1, false, self.name, true)[1]
     --print(peach_or_not)
-    local alives = room:getAlivePlayers()
     local targets = {}
-    for _,p in ipairs(alives) do
-      table.insert(targets, p.id)
-    end
     if peach_or_not then
       room:throwCard(peach_or_not, self.name, player)
       local god_salvation = Fk:cloneCard("god_salvation")
       local new_use = {} ---@type CardUseStruct
       new_use.from = player.id
       new_use.tos = {}
-      for _, target in ipairs(targets) do
-        table.insert(new_use.tos, { target })
-      end
       new_use.card = god_salvation
       new_use.skillName = self.name
-      room:useCard(new_use)
+      for _,p in ipairs(room:getAlivePlayers()) do
+        if not player:isProhibited(p, new_use.card) then
+      	  table.insert(new_use.tos, { p.id })
+        end
+      end
+      if not is_jilei(player, new_use.card) then
+      	room:useCard(new_use)
+      end
     else
       player:turnOver()
       local savage_assault = Fk:cloneCard("savage_assault")
       local new_use = {} ---@type CardUseStruct
       new_use.from = player.id
       new_use.tos = {}
-      for _, target in ipairs(targets) do
-        if target ~= player.id then
-          table.insert(new_use.tos, { target })
-        end
-      end
       new_use.card = savage_assault
       new_use.skillName = self.name
-      room:useCard(new_use)
+      for _,p in ipairs(room:getOtherPlayers(player)) do
+        if not player:isProhibited(p, new_use.card) then
+      	  table.insert(new_use.tos, { p.id })
+        end
+      end
+      if not is_jilei(player, new_use.card) then
+      	room:useCard(new_use)
+      end
     end
   end,
 }
@@ -2768,7 +2767,7 @@ local v_chengzhang = fk.CreateTriggerSkill{
 --角色马克：
 --------------------------------------------------
 
-local xiaomao_lairikeqi = General(extension,"xiaomao_lairikeqi", "individual", 0, 4, General.Female)
+local xiaomao_lairikeqi = General(extension,"xiaomao_lairikeqi", "individual", 4, 4, General.Female)
 xiaomao_lairikeqi:addSkill(v_bianshi)
 xiaomao_lairikeqi:addSkill(v_chengzhang)
 
