@@ -33,6 +33,7 @@ Fk:loadTranslationTable{
 
 	--通用选项
 	["draw_1"] = "摸一张牌",
+	["draw_2"] = "摸两张牌",
 	["recover_1"] = "回复一点体力",
 	["confirm"] = "确认",
 	["cancel"] = "取消",
@@ -88,10 +89,22 @@ Fk:loadTranslationTable{
 	["illustrator:qiulinzi_wangyinwunv"] = "Bison仓鼠",
 	["~qiulinzi_wangyinwunv"] = "",
 	["v_libeng"] = "礼崩",
+	["#v_libeng_prohibit"] = "礼崩",
 	["#v_libeng_buff"] = "礼崩",
+	["#v_libeng_slash"] = "礼崩",
+	["@v_libeng"] = "礼崩",
 	[":v_libeng"] = "出牌阶段，你可以与一名角色拼点：若你赢，你使用的下一张【杀】无次数限制且不能被【闪】响应；若你没赢，本阶段你不能使用【杀】、不能发动此技能。",
 	["$v_libeng"] = "",
 	["^v_libeng"] = "操作提示：<br/>选择一张用于拼点的手牌→选择一名角色→确定",
+	["v_chaodu"] = "超度",
+	--[":chaodu"] = "你造成伤害使一名角色离场时，你可以摸两张牌、将其武将牌替换为秋凛子Token（无技能）。",
+	[":v_chaodu"] = "当一名其他角色因受到【杀】的伤害而离场时，你可以<font color='#A9A9A9'>发动此技能</font>，选择一项：1.摸两张牌；2.回复1点体力。",
+	-- [":v_chaodu"] = "当一名其他角色因受到【杀】的伤害而离场时，你可以<font color='#A9A9A9'>发动此技能</font>，选择一项：1.摸两张牌；2.回复1点体力；3.令其技能失效。",
+	["$v_chaodu1"] = "",
+	["$v_chaodu2"] = "",
+	-- ["v_chaodu_draw"] = "摸两张牌",
+	-- ["v_chaodu_recover"] = "回复1点体力",
+	["v_chaodu_counter"] = "令离场者技能失效",
 
 	--莲汰
 	["liantai_bingyuanlangwang"] = "莲汰",
@@ -196,6 +209,24 @@ Fk:loadTranslationTable{
 	["#v_huoyan"] = "你可以使用“惑炎”，跳过出牌阶段视为使用【火攻】",
 	--["~v_huoyan"] = "选择目标角色→确定",
 
+	--库姬
+	["kuji_chaoyongyuge"] = "库姬",
+	["&kuji_chaoyongyuge"] = "库姬",
+	["#kuji_chaoyongyuge"] = "潮涌余歌",
+	["$kuji_chaoyongyuge"] = "进阶",
+	["designer:kuji_chaoyongyuge"] = "月音风源",
+	["cv:kuji_chaoyongyuge"] = "",
+	["illustrator:kuji_chaoyongyuge"] = "",
+	["~kuji_chaoyongyuge"] = "",
+	["v_diyin"] = "低吟",
+	["#v_diyin_draw"] = "低吟",
+	[":v_diyin"] = "出牌阶段限一次，你可以将所有手牌当一张伤害类锦囊牌使用。此牌结算结束后，你与因此牌受到伤害的角色各摸一张牌。",
+	["$v_diyin1"] = "",
+	["$v_diyin2"] = "",
+	["@v_diyin_useCard"] = "请将所有手牌当 %src 使用",
+	["~v_diyin"] = "选择目标→点击“确定”",
+	["#v_diyin_error"] = "%from 不能通过“%arg”视为使用任何牌",
+
 	--虚研社
 	--卡诺娅
 	["kanuoya_akanluerbanlong"] = "卡诺娅",
@@ -231,6 +262,27 @@ Fk:loadTranslationTable{
 	["v_huweishan_throw_choice"] = "你可以弃置获得的牌，令此杀不计入使用次数",
 
 	--超次元学院
+	--诗小雅
+	["shixiaoya_xianyadan"] = "诗小雅",
+	["&shixiaoya_xianyadan"] = "诗小雅",
+	["#shixiaoya_xianyadan"] = "贤鸭蛋",
+	["$shixiaoya_xianyadan"] = "进阶",
+	["designer:shixiaoya_xianyadan"] = "NSX",
+	["cv:shixiaoya_xianyadan"] = "",
+	["illustrator:shixiaoya_xianyadan"] = "",
+	["~shixiaoya_xianyadan"] = "",
+	["v_qianchang"] = "浅唱",
+	[":v_qianchang"] = "出牌阶段限一次，你可以将所有手牌当一张非伤害类普通锦囊牌使用。",
+	["$v_qianchang1"] = "",
+	["$v_qianchang2"] = "",
+	["@v_qianchang_useCard"] = "请将所有手牌当 %src 使用",
+	["~v_qianchang"] = "选择目标→点击“确定”",
+	["#v_qianchang_error"] = "%from 不能通过“%arg”视为使用任何牌",
+	["v_mingxian"] = "明贤",
+	[":v_mingxian"] = "锁定技，你成为其他角色使用红色【杀】或雷【杀】的目标后，该角色须交给你一张【杀】，否则此牌对你无效。",
+	["#v_mingxian_give"] = "请交给 %src 一张杀，否则此【杀】对其无效",
+	["$v_mingxian"] = "",
+
 	--弦羽
 	["xianyu_xiangluancuxian"] = "弦羽",
 	["&xianyu_xiangluancuxian"] = "弦羽",

@@ -27,11 +27,9 @@ extension.metadata = require "packages.vupslash.metadata"
 -- 增加超过最大体力值和滋养
 -- 思考图片的处理方式
 --底层部分
+-- 技能失效后续看N神会不会提供便捷的入口，否则就要写一个function然后放在其他技能的on_cost里，相关标签名单可以通过萌的table.insert手段放入function里。
 -- 【已写在0.0.8名单】增加冰属性伤害（涉及：冰沙···）
--- 【已写在0.0.8名单】在卡牌上做标记（涉及：秋乌炽翎）
--- 【已写在0.0.8名单——问题解决了请后续跟进！】增加轮次时点（涉及：萨比萌视幻）
 -- 新增技能种类：转换技
--- 玩家是否可以使用特定牌
 -- 从指定牌堆中找特定的牌
 -- 胜率！（根据单游戏包/多游戏包，不同模式分类（可以把这些也做进筛选项））
 -- 录像！！！！
@@ -42,8 +40,7 @@ extension.metadata = require "packages.vupslash.metadata"
 
 --------------------------------------------------
 --通用马克
---缺少技能无效时的应对（慵懒，芳仙，视幻等，后续更新）【疑似在skill里有可用函数】
--- 在上面的情况下，以下技能存在跳过阶段无法作为on_cost一部分的方式，后续处理（芳仙、娇惰）
+--以下技能存在跳过阶段无法作为on_cost一部分的方式，后续处理（芳仙、娇惰）
 --通用计算回合内伤害/弃牌量的东西暂时耦合在其他技能里，可以考虑先单独做一个技能然后其他技能调用这个技能，以后再优化（扬歌，抹挑，采集）
 
 --有个player:canEffect(对方角色,技能名)以及SkillCanTarget(对方角色, player, 技能名)的看不出来是什么，疑似与词条“发动此技能”有关，但和技能无效一样是通用内容）
@@ -69,6 +66,24 @@ extension.metadata = require "packages.vupslash.metadata"
 
 -- 7. 【已写在0.0.8名单】返回牌堆
 --------------------------------------------------
+
+--------------------------------------------------
+--combobox大全
+--------------------------------------------------
+
+local normal_tricks = {
+  "dismantlement", "snatch", "duel", "collateral",
+  "ex_nihilo", "savage_assault", "archery_attack", "god_salvation",
+  "amazing_grace", "iron_chain", "fire_attack",
+}
+local not_damage_tricks = {
+  "dismantlement", "snatch", "collateral",
+  "ex_nihilo", "god_salvation",
+  "amazing_grace", "iron_chain",
+}
+local damage_tricks = {
+  "duel", "fire_attack", "savage_assault", "archery_attack",
+}
 
 --------------------------------------------------
 --检查是否存在对应阶段
@@ -183,61 +198,28 @@ end,
 --Fk:addSkill(mark_cleaner)
 
 --------------------------------------------------
---额外体力标记
---bug：技能未触发
---技能马克：未完成滋养前置的体力增加导致额外体力标记数量增加。
+--出牌阶段造成多少伤害
 --------------------------------------------------
 
-local extra_hp = fk.CreateTriggerSkill{
-name = "#extra_hp",
-refresh_events = {fk.GameStart, fk.Damaged, fk.HpChanged},
-can_refresh = function(self, event, target, player, data)
-  if event == fk.GameStart then
-    return true
-  elseif event == fk.Damaged then
+local damage_checker_phase = fk.CreateTriggerSkill{
+  name = "#damage_checker_phase",
+  refresh_events = {fk.Damage},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name)
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
     local damage = data
-    return target == player and damage.damage > 0
-  elseif event == fk.HpChanged then
-    local damage = data
-    return target == player and damage.damage < 0
-  end
-end,
-on_refresh = function(self, event, target, player, data)
-  local room = player.room
-  if event == fk.GameStart then
-    -- 检索所有在场角色，赋予额外体力标记。
-    print(1)
-    local all = room:getAllPlayers()
-    for _,p in ipairs(all) do
-      if p.hp > p.maxhp then
-        local x = p.hp - p.maxHp
-        room:setPlayerMark(p, "@extra_hp", x)
-      end
-    end
-  elseif event == fk.Damaged then
-    --减少对应的标记，如小于最大体力，归零
-    if player.maxhp >= player.hp then
-      room:setPlayerMark(player, "@extra_hp", 0)
-    else
-      local x = player.hp - player.maxHp
-      room:setPlayerMark(player, "@extra_hp", x)
-    end
-  elseif event == fk.HpChanged then
-    --增加对应的标记，需要注意此处的damage可能要改成-1之类的，配合以后的伪滋养处理吧。
-    local damage = data
-    print(data)
-  end
-end,
+    room:addPlayerMark(player, "#play_damage-phase", damage.damage)
+  end,
 }
-
-Fk:addSkill(extra_hp)
 
 --------------------------------------------------
 --本回合造成多少伤害
 --------------------------------------------------
 
-local damage_checker = fk.CreateTriggerSkill{
-name = "#damage_checker",
+local damage_checker_turn = fk.CreateTriggerSkill{
+name = "#damage_checker_turn",
 refresh_events = {fk.Damage},
 can_refresh = function(self, event, target, player, data)
   return target == player
@@ -246,10 +228,9 @@ on_refresh = function(self, event, target, player, data)
   local room = player.room
   local damage = data
   print(damage.damage)
-  room:addPlayerMark(player, "#turn_damage", damage.damage)
+  room:addPlayerMark(player, "#turn_damage-turn", damage.damage)
 end,
 }
-table.insert(turn_end_clear_mark, "#turn_damage")
 
 --Fk:addSkill(damage_checker)
 
@@ -406,6 +387,8 @@ local v_cangcong = fk.CreateTriggerSkill{
   --   --end
   -- end,
   on_use = function(self, event, target, player, data)
+    --local room = player.room
+    --room:setEmotion(player, "./packages/vupslash/image/anim/skill_nullify")
     table.insert(data.nullifiedTargets, player.id)
   end,
 }
@@ -495,7 +478,6 @@ local v_chouka = fk.CreateTriggerSkill{
 
 --------------------------------------------------
 --慵懒
---技能马克：后续需要关注丈八等转化牌的效果（目前丈八是相加的暂时解决不了）
 --------------------------------------------------
 
 local v_yonglanHelper = fk.CreateTriggerSkill{
@@ -508,7 +490,7 @@ local v_yonglanHelper = fk.CreateTriggerSkill{
   on_refresh = function(self, event, target, player, data)
     local card = data.card
     local room = player.room
-    if card.trueName == "slash" and card.number > 0 then
+    if card.trueName == "slash" and card.number > 0 and card.id > 0 then
       --print(card.number)
       room:setPlayerMark(player, "v_yonglan_currentSlash", card.number)
     else
@@ -541,7 +523,7 @@ v_yonglan:addRelatedSkill(v_yonglanHelper)
 
 --------------------------------------------------
 --白神遥
---角色马克：抽卡，慵懒
+--角色马克：抽卡
 --------------------------------------------------
 
 local baishenyao_zhaijiahaibao = General(extension, "baishenyao_zhaijiahaibao", "psp", 3, 3, General.Female)
@@ -550,90 +532,142 @@ baishenyao_zhaijiahaibao:addSkill(v_yonglan)
 
 --------------------------------------------------
 --礼崩
---TODO:拼点部分这个版本做不了，寄；礼崩禁止使用杀是否需要技能存在待定，看起来不需要
+--FIXME:礼崩失败后还能用杀。
+--TODO:礼崩禁止使用杀是否需要技能存在待定，看起来不需要
 --------------------------------------------------
 
--- local v_libeng_prohibit = fk.CreateProhibitSkill{
---   name = "#v_libeng_prohibit",
--- is_prohibited = function(self, from, to, card)
---   return false
--- end,
---   prohibit_use = function(self, player, card)
---     return player:getMark("v_libeng_prohibit_slash-phase") > 0 
---       and card.trueName == "slash"
---   end,
--- }
--- local v_libeng_buff = fk.CreateTargetModSkill{
---   name = "#v_libeng_buff",
---   residue_func = function(self, player, skill, scope)
---     if player:hasSkill(self.name) and skill.trueName == "slash_skill"
---       and scope == Player.HistoryPhase and player:getMark("@v_libeng") > 0 then
---       return 999
---     end
---   end,
--- }
--- local v_libeng_slash = fk.CreateTriggerSkill{
---   name = "v_libeng_slash",
---   --赋予输出型技能定义,
---   anim_type = "offensive",
---   --技能为锁定技，满足条件后强制发动
---   frequency = Skill.Compulsory,
---   --时机：目标确定后
---   events = {fk.TargetSpecified},
---   --触发条件：触发时机的角色为遍历到的角色，触发者拥有此技能，牌的真名为杀，遍历到的角色存在礼崩胜利标记
---   can_trigger = function(self, event, target, player, data)
---     return target == player and player:hasSkill(self.name) and player:getMark("@v_libeng") > 0
---   end,
---   on_use = function(self, event, target, player, data)
---     local room = player.room
---     room:removePlayerMark(player, "@v_libeng", 1)
---     data.disresponsive = true
---   end,
--- }
--- local v_libeng = fk.CreateActiveSkill{
---   name = "v_libeng",
---   anim_type = "offensive",
---   --如何检查自己是否可以拼点？
---   can_use = function(self, player)
---     return (not player:isKongcheng()) and player:getMark("v_libeng_prohibit_skill-phase") > 0 
---   end,
---   target_num = 1,
---   card_num = 1,
---   card_filter = function(self, to_select, selected, selected_targets)
---     if #selected == 1 then return false end
---     return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
---   end,
---   --如何检查对方是否可以被拼点？
---   target_filter = function(self, to_select, selected)
---     local target = Fk:currentRoom():getPlayerById(to_select)
---     return #selected == 0 and to_select ~= Self.id and (not target:isKongcheng())
---   end,
---   on_use = function(self, room, effect)
---     --先拼点
---     local player = room:getPlayerById(effect.from)
---     local target = room:getPlayerById(effect.tos[1])
---     room:pindian{
---       from = player,
---       to = {target},
---       reason = self.name,
---       fromCard = effect.card,
---     }
---     --根据结果提供对应mark（怎么出结果？）
---   end,
--- }
+local v_libeng_prohibit = fk.CreateProhibitSkill{
+  name = "#v_libeng_prohibit",
+  prohibit_use = function(self, player, card)
+    return player:getMark("v_libeng_prohibit_slash-phase") > 0 
+      and card.trueName == "slash"
+  end,
+}
+local v_libeng_buff = fk.CreateTargetModSkill{
+  name = "#v_libeng_buff",
+  residue_func = function(self, player, skill, scope, card)
+    if player:hasSkill(self.name) and skill.trueName == "slash_skill"
+      and scope == Player.HistoryPhase and player:getMark("@v_libeng") > 0 then
+      return 999
+    end
+  end,
+}
+local v_libeng_slash = fk.CreateTriggerSkill{
+  name = "#v_libeng_slash",
+  --赋予输出型技能定义,
+  anim_type = "offensive",
+  --技能为锁定技，满足条件后强制发动
+  frequency = Skill.Compulsory,
+  --时机：目标确定后
+  events = {fk.TargetSpecified},
+  --触发条件：触发时机的角色为遍历到的角色，触发者拥有此技能，牌的真名为杀，遍历到的角色存在礼崩胜利标记
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name, true) 
+    and data.card.trueName == "slash" and player:getMark("@v_libeng") > 0
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:removePlayerMark(player, "@v_libeng", 1)
+    data.disresponsive = true
+  end,
+}
+local v_libeng = fk.CreateActiveSkill{
+  name = "v_libeng",
+  anim_type = "offensive",
+  --如何检查自己是否可以拼点？
+  can_use = function(self, player)
+    return (not player:isKongcheng()) and player:getMark("v_libeng_prohibit_skill-phase") == 0 
+  end,
+  target_num = 1,
+  -- card_num = 1,
+  card_filter = function(self, to_select, selected, selected_targets)
+    return false
+    -- if #selected == 1 then return false end
+    -- return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+  end,
+  --如何检查对方是否可以被拼点？
+  target_filter = function(self, to_select, selected)
+    local target = Fk:currentRoom():getPlayerById(to_select)
+    return #selected == 0 and to_select ~= Self.id and (not target:isKongcheng())
+  end,
+  on_use = function(self, room, effect)
+    --先拼点
+    local player = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.tos[1])
+    local pindian = player:pindian({target}, self.name)
+    --根据结果提供对应mark
+    if pindian.results[target.id].winner == player then
+      room:addPlayerMark(player, "@v_libeng", 1)
+    else
+      room:addPlayerMark(player, "v_libeng_prohibit_skill-phase", 1)
+      room:addPlayerMark(player, "v_libeng_prohibit_slash-phase", 1)
+    end
+  end,
+}
 
--- v_libeng:addRelatedSkill(v_libeng_buff)
--- v_libeng:addRelatedSkill(v_libeng_prohibit)
--- v_libeng:addRelatedSkill(v_libeng_slash)
+v_libeng:addRelatedSkill(v_libeng_buff)
+v_libeng:addRelatedSkill(v_libeng_prohibit)
+v_libeng:addRelatedSkill(v_libeng_slash)
+
+--------------------------------------------------
+--超度
+--TODO：到时候把技能失效补好。
+--------------------------------------------------
+
+local v_chaodu = fk.CreateTriggerSkill{
+  name = "v_chaodu",
+  anim_type = "support",
+  events = {fk.Death},
+  can_trigger = function(self, event, target, player, data)
+    return target ~= player and player:hasSkill(self.name, false, false) and not player.dead
+      and data.damage 
+      and data.damage.card and data.damage.card.trueName == "slash" 
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local choiceList = {}
+    table.insert(choiceList, "recover_1")
+    table.insert(choiceList, "draw_2")
+    table.insert(choiceList, "v_chaodu_counter")
+    table.insert(choiceList, "cancel")
+    local choice = room:askForChoice(player, choiceList, self.name)
+    if choice == "cancel" then
+      return false
+    elseif choice == "recover_1" then
+      self.cost_data = 1
+    elseif choice == "draw_2" then
+      self.cost_data = 2
+    -- elseif choice == "v_chaodu_counter" then
+    --   self.cost_data = 3
+    end
+    return true
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    if self.cost_data == 1 then
+      room:recover{
+        who = player,
+        num = 1,
+        recoverBy = player,
+        skillName = self.name,
+      }
+    elseif self.cost_data == 2 then
+      player:drawCards(2, self.name)
+    -- elseif self.cost_data == 3 then
+    --   print("to be continued")
+    end
+  end,
+}
 
 --------------------------------------------------
 --秋凛子
 --角色马克：
 --------------------------------------------------
 
--- local qiulinzi_wangyinwunv = General(extension, "qiulinzi_wangyinwunv", "psp", 4, 4, General.Female)
--- qiulinzi_wangyinwunv:addSkill(v_libeng)
--- qiulinzi_wangyinwunv:addSkill(v_chaodu)
+local qiulinzi_wangyinwunv = General(extension, "qiulinzi_wangyinwunv", "psp", 4, 4, General.Female)
+qiulinzi_wangyinwunv:addSkill(v_libeng)
+qiulinzi_wangyinwunv:addSkill(v_chaodu)
+-- qiulinzi_wangyinwunv:addSkill(v_cheat)
 
 --------------------------------------------------
 --逐猎
@@ -911,7 +945,7 @@ local xingzhigumiya_mengmao = General(extension, "xingzhigumiya_mengmao", "psp",
 xingzhigumiya_mengmao:addSkill(v_baosha)
 xingzhigumiya_mengmao:addSkill(v_xianwei)
 xingzhigumiya_mengmao:addSkill(v_xingmao)
---xingzhigumiya_mengmao:addSkill(v_cheat)
+-- xingzhigumiya_mengmao:addSkill(v_cheat)
 
 --------------------------------------------------
 --咏星
@@ -1244,6 +1278,82 @@ local v_huoyan = fk.CreateTriggerSkill{
 --youte_lianxinmonv:addSkill(v_huoyan)
 
 --------------------------------------------------
+--低吟
+--------------------------------------------------
+
+local v_diyin = fk.CreateViewAsSkill{
+  name = "v_diyin",
+  interaction = UI.ComboBox {choices = damage_tricks},
+  enabled_at_play = function(self, player)
+    return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0 and not player:isKongcheng()
+  end,
+  card_filter = function()
+    return false
+  end,
+  view_as = function(self, cards)
+    local card = Fk:cloneCard(self.interaction.data)
+    card:addSubcards(Self:getCardIds(Player.Hand))
+    card.skillName = self.name
+    return card
+  end,
+}
+local v_diyin_draw = fk.CreateTriggerSkill{
+  name = "#v_diyin_draw",
+  --赋予输出型技能定义
+  anim_type = "offensive",
+  --时机：手牌结算后
+  events = {fk.CardUseFinished},
+  --触发条件：
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name)
+    and data.card and data.card.skillName == "v_diyin"
+  end,
+  -- on_trigger = function(self, event, target, player, data)
+  --   --if self:isEffectable(player) then
+  --   self:doCost(event, target, player, data)
+  --   --end
+  -- end,
+  on_cost = function(self, event, target, player, data)
+    return true
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local pla = room:getPlayerById(data.from)
+    if pla and pla:isAlive() then
+      room:drawCards(pla, 1, "v_diyin")
+    end
+    for _, p in ipairs(room:getAllPlayers()) do
+      if p:getMark("v_diyin_damage-phase") > 0 then
+        room:setPlayerMark(p, "v_diyin_damage-phase", 0)
+        --之后能否被技能指定为目标可以在这判定
+        room:drawCards(p, 1, "v_diyin")
+      end
+    end
+  end,
+
+  --刷新时机：受到伤害后
+  refresh_events = {fk.Damaged},
+  can_refresh = function(self, event, target, player, data)
+    return data.card and data.card.skillName == "v_diyin" 
+    and data.to and data.to:isAlive()
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    room:setPlayerMark(data.to, "v_diyin_damage-phase", 1)
+  end
+}
+v_diyin:addRelatedSkill(v_diyin_draw)
+
+
+--------------------------------------------------
+--库姬
+--角色马克：
+--------------------------------------------------
+
+local kuji_chaoyongyuge = General(extension, "kuji_chaoyongyuge", "facemoe", 4, 4, General.Female)
+kuji_chaoyongyuge:addSkill(v_diyin)
+
+--------------------------------------------------
 --龙息
 --------------------------------------------------
 
@@ -1361,6 +1471,87 @@ local v_huweishan = fk.CreateTriggerSkill{
 local xingmengzhenxue_rongyixiaohu = General(extension,"xingmengzhenxue_rongyixiaohu", "individual", 4, 4, General.Female)
 xingmengzhenxue_rongyixiaohu:addSkill(v_huweishan)
 --xingmengzhenxue_rongyixiaohu:addSkill(v_cheat)
+
+--------------------------------------------------
+--浅唱
+--技能马克：
+--------------------------------------------------
+
+local v_qianchang = fk.CreateViewAsSkill{
+  name = "v_qianchang",
+  interaction = UI.ComboBox {choices = not_damage_tricks},
+  enabled_at_play = function(self, player)
+    return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0 and not player:isKongcheng()
+  end,
+  card_filter = function()
+    return false
+  end,
+  view_as = function(self, cards)
+    local card = Fk:cloneCard(self.interaction.data)
+    card:addSubcards(Self:getCardIds(Player.Hand))
+    card.skillName = self.name
+    return card
+  end,
+}
+
+--------------------------------------------------
+--明贤
+--TODO: 技能发动，但没询问，on_use部分pla没显示。
+--------------------------------------------------
+
+local v_mingxian = fk.CreateTriggerSkill{
+  name = "v_mingxian",
+  --赋予防御型技能定义,
+  anim_type = "defensive",
+  --技能为锁定技，满足条件后强制发动
+  frequency = Skill.Compulsory,
+  --时机：目标确定后
+  events = {fk.TargetSpecified},
+  --触发条件：
+  can_trigger = function(self, event, target, player, data)
+    local room = player.room
+    -- local mingxian_tar = AimGroup:getAllTargets(data.tos)
+    -- local mingxian_con_pls = false
+    -- for _, p in ipairs(mingxian_tar) do
+    --   local pls = room:getPlayerById(p)
+    --   if pls:hasSkill(self.name) then
+    --     mingxian_con_pls = true
+    --   end
+    -- end
+    local pla = room:getPlayerById(data.from)
+    return player:hasSkill(self.name) 
+    and data.card and data.card.trueName == "slash" 
+    and (data.card.color == Card.Red or data.card.name == "thunder__slash")
+    and pla and pla:isAlive() and pla ~= player
+    and data.to
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local pla = room:getPlayerById(data.from)
+    --if data.from ~= player then
+    --doindicate的两个参数均为integer类型，一般为角色id
+    room:doIndicate(pla.id, {player.id} )
+    --end
+    --询问是否交对应的牌，如存在，继续，否则失效。
+    local prompt = "#v_mingxian_give:"..player.id
+    local slash_or_not = room:askForCard(pla, 1, 1, false, self.name, true,"slash|.|.|hand" ,prompt)[1]
+    if slash_or_not then
+      room:obtainCard(player, slash_or_not, true, fk.ReasonGive)
+    else
+      --room:setEmotion(player, "./packages/vupslash/image/anim/skill_nullify")
+      table.insert(data.nullifiedTargets, player.id)
+    end
+  end,
+}
+
+--------------------------------------------------
+--诗小雅
+--角色马克：
+--------------------------------------------------
+
+local shixiaoya_xianyadan = General(extension,"shixiaoya_xianyadan", "chaociyuan", 3, 3, General.Female)
+shixiaoya_xianyadan:addSkill(v_qianchang)
+shixiaoya_xianyadan:addSkill(v_mingxian)
 
 --------------------------------------------------
 --抹挑
