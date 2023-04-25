@@ -270,7 +270,15 @@ Fk:loadTranslationTable{
 	[":v_longxi"] = "锁定技，你于出牌阶段内使用的第二张牌指定目标后，你破坏所有目标角色的各一张牌。",
 	["$v_longxi"] = "",
 
-	--卡诺娅
+	--小希小桃
+	["xiaoxixiaotao_eniac"] = "小希小桃",
+	["&xiaoxixiaotao_eniac"] = "小希小桃",
+	["#xiaoxixiaotao_eniac"] = "ENIAC",
+	["$xiaoxixiaotao_eniac"] = "萌新",
+	["designer:xiaoxixiaotao_eniac"] = "NSX、yakui",
+	["cv:xiaoxixiaotao_eniac"] = "",
+	["illustrator:xiaoxixiaotao_eniac"] = "",
+	["~xiaoxixiaotao_eniac"] = "",
 	["v_lianmei"] = "联袂",
 	[":v_lianmei"] = "你受到伤害后，你可以指定一名角色，<font color='#A9A9A9'>发动此技能</font>，令其弃置一张牌，然后你破坏其一张牌。",
 	["$v_lianmei1"] = "",
