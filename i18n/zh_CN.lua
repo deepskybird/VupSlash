@@ -35,6 +35,7 @@ Fk:loadTranslationTable{
 	["draw_1"] = "摸一张牌",
 	["draw_2"] = "摸两张牌",
 	["recover_1"] = "回复一点体力",
+	["v_discard_1"] = "回复一点体力",
 	["confirm"] = "确认",
 	["cancel"] = "取消",
 
@@ -119,6 +120,8 @@ Fk:loadTranslationTable{
 	["@v_zhuoshi-turn"] = "卓识",
 	[":v_zhuoshi"] = "锁定技，你使用锦囊牌时，你摸一张牌，然后弃置一张牌或将任意张牌交给一名其他角色。<br/>以此法交出的牌每回合每种类型限一张。",
 	["$v_zhuoshi"] = "",
+	["#v_zhuoshi_carddis"] = "若你选择弃置一张牌，你须弃置一张牌",
+	["#v_zhuoshi_cardaskgive"] = "若你选择交给其他角色一张牌，你可将任意张类别不同的牌交给一名角色<br/>你可以交出 %arg",
 	["#v_zhuoshi_cardask"] = "你须弃置一张牌%arg%arg2",
 	["v_zhuoshi_can_give"] = "，或将任意张类别不同的牌交给一名角色<br/>你可以交出 ",
 	["v_zhuoshi_type_0"] = "基本牌、锦囊牌、装备牌",
@@ -266,6 +269,13 @@ Fk:loadTranslationTable{
 	["v_longxi_getmark"] = "龙息",
 	[":v_longxi"] = "锁定技，你于出牌阶段内使用的第二张牌指定目标后，你破坏所有目标角色的各一张牌。",
 	["$v_longxi"] = "",
+
+	--卡诺娅
+	["v_lianmei"] = "联袂",
+	[":v_lianmei"] = "你受到伤害后，你可以指定一名角色，<font color='#A9A9A9'>发动此技能</font>，令其弃置一张牌，然后你破坏其一张牌。",
+	["$v_lianmei1"] = "",
+	["$v_lianmei2"] = "",
+	["#v_lianmei_ask"] = "你可以发动“联袂”，令一名角色弃置一张牌再被你破坏其一张牌",
 
 	--泥鸭幼儿园
 	--星梦真雪

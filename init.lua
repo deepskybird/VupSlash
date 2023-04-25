@@ -671,136 +671,150 @@ qiulinzi_wangyinwunv:addSkill(v_chaodu)
 
 --------------------------------------------------
 --卓识
---TODO：大于等于两张牌的时候如何令玩家无法确定;标签显示优化(可以考虑修改函数令其根据对应type返回中文)；需要修改逻辑：选择牌为一张的时候，没有限制但选中后如果是你之前交过的种类则无法选择目标。
+--TODO：标签显示优化(可以考虑修改函数令其根据对应type返回中文)；interaction有响应bug无法写下去了。
 --------------------------------------------------
 
-local v_zhuoshi_card = fk.CreateActiveSkill{
-  name = "#v_zhuoshi_card",
-  anim_type = "drawcard",
-  max_target_num = 1,
-  min_card_num = 1,
-  can_use = function(self, player)
-    return player:isAlive() and not player:isNude()
-  end,
-  card_filter = function(self, to_select, selected, targets)
-    local types = Self:getMark("@v_zhuoshi-turn")
-    local card_or_not = true
-    for _,p in ipairs(selected) do
-      if Fk:getCardById(p).type == Fk:getCardById(to_select).type then
-        card_or_not = false
-        break
-      end
-    end
-    if type(types) == "table" then
-      return card_or_not and not table.contains(types, Fk:getCardById(to_select):getTypeString())
-    else
-      return card_or_not
-    end
-  end,
-  target_filter = function(self, to_select, selected, cards)
-    if #cards >= 1 then
-      return #selected == 0 and to_select ~= Self.id
-    elseif #cards < 1 then
-      return false
-    end
-  end,
-  on_use = function(self, room, effect)
-    local player = room:getPlayerById(effect.from)
-    local target = nil
-    if effect.tos[1] then
-      target = room:getPlayerById(effect.tos[1])
-      local types = player:getMark("@v_zhuoshi-turn")
-      if type(types) ~= "table" then
-        types = {}
-      end
-      for _,p in ipairs(effect.cards) do
-        table.insertIfNeed(types, Fk:getCardById(p):getTypeString())
-      end
-      room:setPlayerMark(player, "@v_zhuoshi-turn", types)
-      room:moveCards({
-        ids = effect.cards,
-        from = player.id,
-        to = target.id,
-        toArea = Card.PlayerHand,
-        moveReason = fk.ReasonGive,
-      })
-    else
-      room:moveCards({
-        ids = effect.cards,
-        from = player.id,
-        toArea = Card.DiscardPile,
-        moveReason = fk.ReasonDiscard,
-      })
-    end
-  end,
-}
-local v_zhuoshi = fk.CreateTriggerSkill{
-  name = "v_zhuoshi",
-  --赋予摸牌型技能定义
-  anim_type = "drawcard",
-  --技能为锁定技，满足条件后强制发动
-  frequency = Skill.Compulsory,
-  --时机：宣告手牌使用时
-  events = {fk.AfterCardUseDeclared},
-  --触发条件：触发时机的角色为遍历到的角色、遍历到的角色具有本技能
-  --         牌的类型为锦囊牌
-  can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) 
-    and data.card.type == Card.TypeTrick
-  end,
-  on_cost = function(self, event, target, player, data)
-    return true
-  end,
-  on_use = function(self, event, target, player, data)
-    local room = player.room
-    local types = player:getMark("@v_zhuoshi-turn")
-    local bas = 0
-    local tri = 0
-    local equ = 0
-    if type(types) == "table" then
-      if table.contains(types, "basic") then
-        bas = 1
-      end
-      if table.contains(types, "trick") then
-        tri = 1
-      end
-      if table.contains(types, "equip") then
-        equ = 1
-      end
-    end
-    local next_str = ""
-    local type_str = "v_zhuoshi_type_" .. (bas + tri*2 + equ*4)
-    if type_str ~= "v_zhuoshi_type_7" then
-      next_str = "v_zhuoshi_can_give"
-    end
-    local prompt = "#v_zhuoshi_cardask:::"..next_str..":"..type_str
-    player:drawCards(1, self.name)
-    room:askForUseActiveSkill(player, "#v_zhuoshi_card", prompt, false)
-  end,
+-- local v_zhuoshi_choice = {
+--     "v_zhuoshi_give_card", "v_discard_1"
+-- }
 
-  --refresh_events = {fk.CardUseFinished, fk.EventPhaseStart},
-  -- refresh_events = {fk.AfterCardUseDeclared},
-  -- can_refresh = function(self, event, target, player, data)
-  --   return target == player and player:hasSkill(self.name) and player.phase == Player.Play
-  -- end,
-  -- on_refresh = function(self, event, target, player, data)
-  --   local room = player.room
-  --   self.can_xixue = suit_close(data.card.suit) == player:getMark("#v_xixue_mark-phase")
-  --   room:setPlayerMark(player, "#v_xixue_mark-phase", data.card.suit)
-  --   room:setPlayerMark(player, "@v_xixue_mark-phase", data.card:getSuitString())
-  -- end,
-}
-v_zhuoshi:addRelatedSkill(v_zhuoshi_card)
+-- local v_zhuoshi_card = fk.CreateActiveSkill{
+--   name = "#v_zhuoshi_card",
+--   anim_type = "drawcard",
+--   min_target_num = 1,
+--   max_target_num = 1,
+--   min_card_num = 1,
+--   interaction = UI.ComboBox {choices = v_zhuoshi_choice},
+--   can_use = function(self, player)
+--     return player:isAlive() and not player:isNude()
+--   end,
+--   card_filter = function(self, to_select, selected, targets)
+--     if self.interaction.data == "v_zhuoshi_give_card" then
+--       local types = Self:getMark("@v_zhuoshi-turn")
+--       local card_or_not = true
+--       for _,p in ipairs(selected) do
+--         if Fk:getCardById(p).type == Fk:getCardById(to_select).type then
+--           card_or_not = false
+--           break
+--         end
+--       end
+--       if type(types) == "table" then
+--         return card_or_not and not table.contains(types, Fk:getCardById(to_select):getTypeString())
+--       else
+--         return card_or_not
+--       end
+--     elseif self.interaction.data == "v_discard_1" then
+--       print(Self)
+--       return not Self:prohibitDiscard(Fk:getCardById(to_select))
+--     end
+--   end,
+--   target_filter = function(self, to_select, selected, cards)
+--     if self.interaction.data == "v_zhuoshi_give_card" then
+--       return #selected == 0 and to_select ~= Self.id
+--     elseif self.interaction.data == "v_discard_1" then
+--       return false
+--     end
+--   end,
+--   on_use = function(self, room, effect)
+--     local player = room:getPlayerById(effect.from)
+--     local target = nil
+--     if effect.tos[1] then
+--       target = room:getPlayerById(effect.tos[1])
+--       local types = player:getMark("@v_zhuoshi-turn")
+--       if type(types) ~= "table" then
+--         types = {}
+--       end
+--       for _,p in ipairs(effect.cards) do
+--         table.insertIfNeed(types, Fk:getCardById(p):getTypeString())
+--       end
+--       room:setPlayerMark(player, "@v_zhuoshi-turn", types)
+--       room:moveCards({
+--         ids = effect.cards,
+--         from = player.id,
+--         to = target.id,
+--         toArea = Card.PlayerHand,
+--         moveReason = fk.ReasonGive,
+--       })
+--     else
+--       room:moveCards({
+--         ids = effect.cards,
+--         from = player.id,
+--         toArea = Card.DiscardPile,
+--         moveReason = fk.ReasonDiscard,
+--       })
+--     end
+--   end,
+-- }
+-- local v_zhuoshi = fk.CreateTriggerSkill{
+--   name = "v_zhuoshi",
+--   --赋予摸牌型技能定义
+--   anim_type = "drawcard",
+--   --技能为锁定技，满足条件后强制发动
+--   frequency = Skill.Compulsory,
+--   --时机：宣告手牌使用时
+--   events = {fk.AfterCardUseDeclared},
+--   --触发条件：触发时机的角色为遍历到的角色、遍历到的角色具有本技能
+--   --         牌的类型为锦囊牌
+--   can_trigger = function(self, event, target, player, data)
+--     return target == player and player:hasSkill(self.name) 
+--     and data.card.type == Card.TypeTrick
+--   end,
+--   on_cost = function(self, event, target, player, data)
+--     return true
+--   end,
+
+--   on_use = function(self, event, target, player, data)
+--     local room = player.room
+--     local types = player:getMark("@v_zhuoshi-turn")
+--     local bas = 0
+--     local tri = 0
+--     local equ = 0
+--     if type(types) == "table" then
+--       if table.contains(types, "basic") then
+--         bas = 1
+--       end
+--       if table.contains(types, "trick") then
+--         tri = 1
+--       end
+--       if table.contains(types, "equip") then
+--         equ = 1
+--       end
+--     end
+--     local next_str = ""
+--     local type_str = "v_zhuoshi_type_" .. (bas + tri*2 + equ*4)
+--     if type_str ~= "v_zhuoshi_type_7" then
+--       next_str = "v_zhuoshi_can_give"
+--     end
+--     -- local prompt_discard = "#v_zhuoshi_carddis"
+--     local prompt = "#v_zhuoshi_cardask:::"..next_str..":"..type_str
+--     -- local prompt_give = "#v_zhuoshi_cardaskgive:::"..type_str
+--     player:drawCards(1, self.name)
+--     room:askForUseActiveSkill(player, "#v_zhuoshi_card", prompt, false)
+--   end,
+
+--   --refresh_events = {fk.CardUseFinished, fk.EventPhaseStart},
+--   -- refresh_events = {fk.AfterCardUseDeclared},
+--   -- can_refresh = function(self, event, target, player, data)
+--   --   return target == player and player:hasSkill(self.name) and player.phase == Player.Play
+--   -- end,
+--   -- on_refresh = function(self, event, target, player, data)
+--   --   local room = player.room
+--   --   self.can_xixue = suit_close(data.card.suit) == player:getMark("#v_xixue_mark-phase")
+--   --   room:setPlayerMark(player, "#v_xixue_mark-phase", data.card.suit)
+--   --   room:setPlayerMark(player, "@v_xixue_mark-phase", data.card:getSuitString())
+--   -- end,
+-- }
+-- v_zhuoshi:addRelatedSkill(v_zhuoshi_card)
 
 --------------------------------------------------
 --YY
 --角色马克：
 --------------------------------------------------
 
-local yizhiyy_mianbaoren = General(extension, "yizhiyy_mianbaoren", "psp", 4, 4, General.Male)
-yizhiyy_mianbaoren:addSkill(v_zhuoshi)
--- yizhiyy_mianbaoren:addSkill(v_fagun)
-yizhiyy_mianbaoren:addSkill(v_cheat)
+-- local yizhiyy_mianbaoren = General(extension, "yizhiyy_mianbaoren", "psp", 4, 4, General.Male)
+-- yizhiyy_mianbaoren:addSkill(v_zhuoshi)
+-- -- yizhiyy_mianbaoren:addSkill(v_fagun)
+-- yizhiyy_mianbaoren:addSkill(v_cheat)
 
 --------------------------------------------------
 --逐猎
@@ -1412,6 +1426,7 @@ local v_huoyan = fk.CreateTriggerSkill{
 
 --------------------------------------------------
 --低吟
+--FIXME:可以穿透米娅的薄纱
 --------------------------------------------------
 
 local v_diyin = fk.CreateViewAsSkill{
@@ -1552,6 +1567,63 @@ kanuoya_akanluerbanlong:addSkill(v_longxi)
 --kanuoya_akanluerbanlong:addSkill(v_cheat)
 
 --------------------------------------------------
+--联袂
+--技能马克：
+--------------------------------------------------
+
+local v_lianmei = fk.CreateTriggerSkill{
+  name = "v_lianmei",
+  --赋予控场型技能定义
+  anim_type = "control",
+  --时机：受到伤害后
+  events = {fk.Damaged},
+  --触发条件：
+  -- 遍历到的角色具有本技能
+  -- 伤害大于0
+  can_trigger = function(self, event, target, player, data)
+    local damage = data
+    return player:hasSkill(self.name) 
+    and damage.damage > 0
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local prompt = "#v_lianmei_ask"
+    local alive = room:getAlivePlayers()
+    local targets = {}
+    for _,p in ipairs(alive) do
+      -- TODO：这里后续可以补充“可被技能指定”与“你的技能可以对其生效”判定，待定
+      if (not p:isNude()) then
+        table.insert(targets, p.id)
+      end
+    end
+    local ret = room:askForChoosePlayers(player, targets, 1, 1, prompt, self.name, true)
+    if #ret > 0 then
+      self.cost_data = ret[1]
+      return true
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local tar = room:getPlayerById(self.cost_data)
+    if not tar:isNude() then
+      room:askForDiscard(tar, 1, 1, true, self.name, false)
+    end
+    --这里可以补一个玩家能否弃置对方一张牌
+    local card = room:askForCardChosen(player, tar, "he", fk.ReasonDiscard)
+    room:throwCard(card, self.name, tar, player)
+  end,
+}
+
+--------------------------------------------------
+--小希小桃
+--角色马克：
+--------------------------------------------------
+
+local xiaoxixiaotao_eniac = General(extension, "xiaoxixiaotao_eniac", "xuyanshe", 4, 4, General.Female)
+xiaoxixiaotao_eniac:addSkill(v_lianmei)
+--kanuoya_akanluerbanlong:addSkill(v_cheat)
+
+--------------------------------------------------
 --狐尾扇
 --技能马克：后续可以给展示用的牌做cardflag
 --------------------------------------------------
@@ -1607,7 +1679,7 @@ xingmengzhenxue_rongyixiaohu:addSkill(v_huweishan)
 
 --------------------------------------------------
 --浅唱
---技能马克：
+--FIXME:可以穿透米娅的薄纱
 --------------------------------------------------
 
 local v_qianchang = fk.CreateViewAsSkill{
@@ -1629,7 +1701,7 @@ local v_qianchang = fk.CreateViewAsSkill{
 
 --------------------------------------------------
 --明贤
---TODO: 技能发动，但没询问，on_use部分pla没显示。
+--TODO: 
 --------------------------------------------------
 
 local v_mingxian = fk.CreateTriggerSkill{
@@ -1643,14 +1715,6 @@ local v_mingxian = fk.CreateTriggerSkill{
   --触发条件：
   can_trigger = function(self, event, target, player, data)
     local room = player.room
-    -- local mingxian_tar = AimGroup:getAllTargets(data.tos)
-    -- local mingxian_con_pls = false
-    -- for _, p in ipairs(mingxian_tar) do
-    --   local pls = room:getPlayerById(p)
-    --   if pls:hasSkill(self.name) then
-    --     mingxian_con_pls = true
-    --   end
-    -- end
     local pla = room:getPlayerById(data.from)
     return player:hasSkill(self.name) 
     and data.card and data.card.trueName == "slash" 
@@ -1663,7 +1727,7 @@ local v_mingxian = fk.CreateTriggerSkill{
     local pla = room:getPlayerById(data.from)
     --if data.from ~= player then
     --doindicate的两个参数均为integer类型，一般为角色id
-    room:doIndicate(pla.id, {player.id} )
+    room:doIndicate( pla.id, {player.id} )
     --end
     --询问是否交对应的牌，如存在，继续，否则失效。
     local prompt = "#v_mingxian_give:"..player.id
