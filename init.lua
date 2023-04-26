@@ -1233,7 +1233,7 @@ v_yangge:addRelatedSkill(v_yangge_damage_checker)
 local dongaili_xingtu = General(extension, "dongaili_xingtu", "psp", 3, 3, General.Female)
 dongaili_xingtu:addSkill(v_yongxing)
 dongaili_xingtu:addSkill(v_yangge)
-dongaili_xingtu:addSkill(v_cheat)
+--dongaili_xingtu:addSkill(v_cheat)
 
 --------------------------------------------------
 --袭穴
