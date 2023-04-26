@@ -824,6 +824,7 @@ local v_zhulie = fk.CreateTargetModSkill{
   name = "v_zhulie",
   residue_func = function(self, player, skill, scope, card)
     if player:hasSkill(self.name) 
+      and card
       and card.color == Card.Red 
       and scope == Player.HistoryPhase then
       return 999
@@ -831,6 +832,7 @@ local v_zhulie = fk.CreateTargetModSkill{
   end,
   distance_limit_func =  function(self, player, skill, card)
     if player:hasSkill(self.name) 
+      and card
       and card.color == Card.Black then
       return 999
     end
@@ -1183,9 +1185,9 @@ local v_yangge = fk.CreateTriggerSkill{
   -- end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    local peach_or_not = room:askForCard(player, 1, 1, false, self.name, true)[1]
+    local prompt = "#v_yangge_ask"
+    local peach_or_not = room:askForCard(player, 1, 1, false, self.name, true, ".", prompt)[1]
     --print(peach_or_not)
-    local targets = {}
     if peach_or_not then
       room:throwCard(peach_or_not, self.name, player)
       local god_salvation = Fk:cloneCard("god_salvation")
@@ -1231,6 +1233,7 @@ v_yangge:addRelatedSkill(v_yangge_damage_checker)
 local dongaili_xingtu = General(extension, "dongaili_xingtu", "psp", 3, 3, General.Female)
 dongaili_xingtu:addSkill(v_yongxing)
 dongaili_xingtu:addSkill(v_yangge)
+dongaili_xingtu:addSkill(v_cheat)
 
 --------------------------------------------------
 --袭穴
@@ -1713,14 +1716,27 @@ local v_mingxian = fk.CreateTriggerSkill{
   --时机：目标确定后
   events = {fk.TargetSpecified},
   --触发条件：
+  --         遍历到的角色具有本技能
+  --         存在卡，且卡的真名为“杀”
+  --         卡的颜色为红色/卡的名字为“雷杀”
+  --         使用牌的角色存在、使用牌的角色存活、使用牌的角色不为遍历到的角色
+  --         牌的目标存在，牌的目标中存在遍历到的角色
+  --         本次流程中第一次触发这个时机
   can_trigger = function(self, event, target, player, data)
     local room = player.room
     local pla = room:getPlayerById(data.from)
+    local target_contain_player = false
+    for _, p in ipairs(AimGroup:getAllTargets(data.tos)) do
+      if p == player.id then
+        target_contain_player = true
+      end
+    end
     return player:hasSkill(self.name) 
     and data.card and data.card.trueName == "slash" 
     and (data.card.color == Card.Red or data.card.name == "thunder__slash")
     and pla and pla:isAlive() and pla ~= player
-    and data.to
+    and #AimGroup:getAllTargets(data.tos) > 0 and target_contain_player
+    and data.firstTarget
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
