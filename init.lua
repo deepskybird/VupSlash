@@ -1581,11 +1581,11 @@ local v_lianmei = fk.CreateTriggerSkill{
   --时机：受到伤害后
   events = {fk.Damaged},
   --触发条件：
-  -- 遍历到的角色具有本技能
-  -- 伤害大于0
+  -- 触发时机的角色为遍历到的角色；遍历到的角色具有本技能；
+  -- 伤害大于0，存在伤害源
   can_trigger = function(self, event, target, player, data)
     local damage = data
-    return player:hasSkill(self.name) 
+    return target == player and player:hasSkill(self.name) 
     and damage.damage > 0
   end,
   on_cost = function(self, event, target, player, data)
