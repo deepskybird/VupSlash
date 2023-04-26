@@ -2022,7 +2022,7 @@ local v_guizhou = fk.CreateTriggerSkill{
       from = data.from,
       to = { to },
       arg = self.name,
-      card = { data.card.id },
+      card = data.card:isVirtual() and data.card.subcards or { data.card.id },
     }
     room:throwCard(self.cost_data[2], self.name, player, player)
     TargetGroup:removeTarget(data.targetGroup, player.id)
