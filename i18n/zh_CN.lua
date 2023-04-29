@@ -374,6 +374,7 @@ Fk:loadTranslationTable{
     ["~v_guizhou"] = "选择一张牌→选择一名其他角色→点击确定",
     ["#v_guizhou_target"] = "%src 对你使用 %arg，你可以弃置一张牌发动“贵胄”，将此牌转移给其他角色",
 	["#v_guizhou_log"] = "由于“%arg”的效果，%from 使用的 %card 目标改为 %to",
+	["#v_guizhou_virtual_log"] = "由于“%arg”的效果，%from 使用的 %arg2 目标改为 %to",
 	["v_kuqing"] = "苦情",
 	[":v_kuqing"] = "你攻击范围内的角色受到伤害后，你可以弃置一张手牌<font color='#A9A9A9'>发动此技能</font>，获得其一张牌。",
 	["$v_kuqing"] = "",

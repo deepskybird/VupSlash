@@ -2017,13 +2017,23 @@ local v_guizhou = fk.CreateTriggerSkill{
     local room = player.room
     local to = self.cost_data[1]
     room:doIndicate(player.id, { to })
-    room:sendLog{
-      type = "#v_guizhou_log",
-      from = data.from,
-      to = { to },
-      arg = self.name,
-      card = data.card:isVirtual() and data.card.subcards or { data.card.id },
-    }
+    if not data.card:isVirtual() then
+      room:sendLog{
+        type = "#v_guizhou_log",
+        from = data.from,
+        to = { to },
+        arg = self.name,
+        card = { data.card.id },
+      }
+    elseif data.card:isVirtual() then
+      room:sendLog{
+        type = "#v_guizhou_virtual_log",
+        from = data.from,
+        to = { to },
+        arg = self.name,
+        arg2 = data.card:toLogString(),
+      }
+    end
     room:throwCard(self.cost_data[2], self.name, player, player)
     TargetGroup:removeTarget(data.targetGroup, player.id)
     TargetGroup:pushTargets(data.targetGroup, to)
@@ -3342,26 +3352,19 @@ local m_1v2_getLogic = function()
 
   function m_1v2_logic:chooseGenerals()
     local room = self.room
-    local function setPlayerGeneral(player, general)
-      if Fk.generals[general] == nil then return end
-      player.general = general
-      player.gender = Fk.generals[general].gender
-      self.room:broadcastProperty(player, "general")
-      self.room:broadcastProperty(player, "gender")
-    end
+    local generalNum = room.settings.generalNum
 
     local lord = room:getLord()
     room.current = lord
     local nonlord = room.players
-    local generals = Fk:getGeneralsRandomly(#nonlord * 3)
+    local generals = Fk:getGeneralsRandomly(#nonlord * generalNum)
     table.shuffle(generals)
     for _, p in ipairs(nonlord) do
-      local arg = {
-        (table.remove(generals, 1)).name,
-        (table.remove(generals, 1)).name,
-        (table.remove(generals, 1)).name,
-      }
-      p.request_data = json.encode(arg)
+      local arg = {}
+      for i = 1, generalNum do
+        table.insert(arg, table.remove(generals, 1).name)
+      end
+      p.request_data = json.encode({ arg, 1 })
       p.default_reply = arg[1]
     end
 
@@ -3369,10 +3372,11 @@ local m_1v2_getLogic = function()
     for _, p in ipairs(nonlord) do
       if p.general == "" and p.reply_ready then
         local general = json.decode(p.client_reply)[1]
-        setPlayerGeneral(p, general)
+        room:setPlayerGeneral(p, general, true)
       else
-        setPlayerGeneral(p, p.default_reply)
+        room:setPlayerGeneral(p, p.default_reply, true)
       end
+      room:broadcastProperty(p, "general")
       p.default_reply = ""
     end
   end
@@ -3446,9 +3450,9 @@ local m_1v2_rule = fk.CreateTriggerSkill{
       for _, p in ipairs(room.alive_players) do
         if p.role == "rebel" then
           local choices = {"m_1v2_draw2", "Cancel"}
-          if p:isWounded() then
-            table.insert(choices, 2, "m_1v2_heal")
-          end
+          --if p:isWounded() then --Vup杀村规不需要这个
+          table.insert(choices, 2, "m_1v2_heal")
+          --end
           local choice = room:askForChoice(p, choices, self.name)
           if choice == "m_1v2_draw2" then p:drawCards(2)
           else room:recover{ who = p, num = 1, skillName = self.name } end
